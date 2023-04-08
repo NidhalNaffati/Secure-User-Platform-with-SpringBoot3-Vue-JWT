@@ -1,0 +1,105 @@
+package com.nidhal.backend.service;
+
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.stereotype.Service;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.util.Calendar;
+
+/**
+ * Service class for sending emails to users. Uses JavaMailSender to send emails using SMTP.
+ */
+@Service
+public class EmailService {
+
+    private final JavaMailSender javaMailSender;
+    private final String senderEmail;
+
+    public EmailService(JavaMailSender javaMailSender, @Value("${spring.mail.username}") String senderEmail) {
+        this.javaMailSender = javaMailSender;
+        this.senderEmail = senderEmail;
+    }
+
+
+    /**
+     * Sends an activation link email to the specified user email address, using the provided activation link URL and
+     * <p>
+     * first name of the user.
+     *
+     * @param email          the email address of the user
+     * @param firstName      the first name of the user
+     * @param activationLink the activation link URL
+     */
+    public void sendActivationLink(String email, String firstName, String activationLink) {
+        String ACTIVATION_EMAIL_TEMPLATE = "templates/activate-account.html";
+        String subject = "Activate Your Account";
+
+        sentEmailWithTemplate(email, firstName, subject, activationLink, ACTIVATION_EMAIL_TEMPLATE);
+    }
+
+    /**
+     * Sends a password reset request email to the specified user email address, using the provided reset password link
+     * <p>
+     * URL and first name of the user.
+     *
+     * @param email             the email address of the user
+     * @param firstName         the first name of the user
+     * @param resetPasswordLink the reset password link URL
+     */
+    public void sendResetPasswordRequestToUser(String email, String firstName, String resetPasswordLink) {
+        String RESET_PASSWORD_EMAIL_TEMPLATE = "templates/reset-password.html";
+        String subject = "Reset Your Password";
+
+        sentEmailWithTemplate(email, firstName, subject, resetPasswordLink, RESET_PASSWORD_EMAIL_TEMPLATE);
+    }
+
+
+    /**
+     * Sends an email with a specified HTML template to the specified user email address, using the provided email subject,
+     * <p>
+     * URL and template.
+     *
+     * @param email     the email address of the user
+     * @param firstName the first name of the user
+     * @param subject   the email subject
+     * @param url       the URL used in the email template
+     * @param template  the email HTML template
+     */
+    public void sentEmailWithTemplate(String email, String firstName, String subject, String url, String template) {
+
+        String senderName = "Spring Boot 3 Team";
+        String currentYear = String.valueOf(Calendar.getInstance().get(Calendar.YEAR));
+
+        try {
+            MimeMessage message = javaMailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setFrom(senderEmail, senderName);
+            helper.setTo(email);
+            helper.setSubject(subject);
+
+            // Load email template from file
+            ClassPathResource resource = new ClassPathResource(template);
+            String content = new String(Files.readAllBytes(resource.getFile().toPath()));
+
+            // Replace placeholders in email template with dynamic content
+            content = content.replace("{{firstName}}", firstName);
+            content = content.replace("{{activationLink}}", url);
+            content = content.replace("{{currentYear}}", currentYear);
+
+            helper.setText(content, true);
+
+            javaMailSender.send(message);
+
+        } catch (MessagingException | IOException exception) {
+            exception.printStackTrace();
+        }
+    }
+
+}

@@ -1,0 +1,41 @@
+server:
+  port: 9090
+
+spring:
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    database: postgresql
+    database-platform: PostgreSQLDialect
+
+  mail:
+    protocol: smtp
+    port: 587
+    host: smtp.gmail.com
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+expiration:
+  default: 86400000              # 24 hours
+  authenticate: 86400000         # 24 hours
+  reset-password: 900000         # 15 minutes
+  enable-account: 900000         # 15 minutes
+
+secret-key: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
