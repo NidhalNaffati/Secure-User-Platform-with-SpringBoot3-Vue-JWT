@@ -3,9 +3,9 @@ server:
 
 spring:
   datasource:
-    url: ${DB_URL}
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
+    url: jdbc:postgresql://localhost:5432/postgres
+    username: postgres
+    password: mysecretpassword
     driver-class-name: org.postgresql.Driver
 
   jpa:
@@ -23,8 +23,8 @@ spring:
     protocol: smtp
     port: 587
     host: smtp.gmail.com
-    username: ${MAIL_USERNAME}
-    password: ${MAIL_PASSWORD}
+    username: nidhal@gmail.com
+    password: nidhal
     properties:
       mail:
         smtp:
@@ -33,8 +33,8 @@ spring:
             enable: true
 
 expiration:
-  default: 86400000              # 24 hours
-  authenticate: 86400000         # 24 hours
+  access-token: 86400000              # 24 hours
+  refresh-token: 86400000         # 24 hours
   reset-password: 900000         # 15 minutes
   enable-account: 900000         # 15 minutes
 

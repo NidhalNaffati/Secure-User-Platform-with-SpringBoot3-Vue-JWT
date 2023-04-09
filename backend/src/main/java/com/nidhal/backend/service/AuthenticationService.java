@@ -10,14 +10,12 @@ import com.nidhal.backend.requests.AuthenticationRequest;
 import com.nidhal.backend.requests.AuthenticationResponse;
 import com.nidhal.backend.requests.RegisterRequest;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.stereotype.Service;
 
-import java.util.Date;
 
 
 @Service
@@ -29,14 +27,6 @@ public class AuthenticationService {
     private final JwtService jwtService;
     private final TokenRepository tokenRepository;
 
-    @Value("${expiration.reset-password}")
-    private long expirationTimeForResetPassword;
-
-    @Value("${expiration.enable-account}")
-    private long expirationTimeForEnableAccount;
-
-    @Value("${expiration.authenticate}")
-    private long expirationTimeForAuthenticate;
 
     public AuthenticationService(AuthenticationManager authenticationManager,
                                  EmailService emailService,
@@ -76,14 +66,16 @@ public class AuthenticationService {
         User user = userService.validateCredentials(request.email(), request.password());
         log.info("User {} successfully authenticated with role {}", user.getFirstName(), user.getRole());
         log.info("User {} successfully authenticated with authority {}", user.getFirstName(), user.getAuthorities());
-        Date expirationToken = new Date(System.currentTimeMillis() + expirationTimeForAuthenticate);
-        var jwtToken = jwtService.generateToken(user, expirationToken);
+
+        String accessToken = jwtService.generateAccessToken(user);
+        String refreshToken = jwtService.generateRefreshToken(user.getUsername());
+
         revokeAllUserTokens(user);
-        saveUserToken(user, jwtToken);
+        saveUserToken(user, accessToken);
         log.info("User successfully authenticated with request {}", request);
 
         // Returns an authentication response containing the JWT token
-        return new AuthenticationResponse(jwtToken);
+        return new AuthenticationResponse(accessToken, refreshToken);
     }
 
     private void saveUserToken(User user, String jwtToken) {
@@ -122,7 +114,7 @@ public class AuthenticationService {
      * @throws PasswordDontMatchException  if the password and password confirm do not match
      * @throws EmailAlreadyExistsException if an account with the given email already exists
      */
-    public AuthenticationResponse registerUser(RegisterRequest registerRequest) {
+    public String registerUser(RegisterRequest registerRequest) {
         // If the password and password confirm do not match, throws an exception
         if (!isPasswordAndPasswordConfirmMatches(registerRequest)) {
             log.error("Password and password confirm doesn't match");
@@ -140,8 +132,7 @@ public class AuthenticationService {
 
         var savedUser = userService.saveUser(user);
 
-        Date expirationDate = new Date(System.currentTimeMillis() + expirationTimeForEnableAccount);
-        var jwtToken = jwtService.generateToken(user, expirationDate);
+        var jwtToken = jwtService.generateTokenForEnableAccount(user.getUsername());
 
         // create the link for the account activation
         String activationLink = "http://localhost:9090/api/v1/auth/enable-user/" + jwtToken;
@@ -159,7 +150,7 @@ public class AuthenticationService {
         log.info("User successfully registered with request {}", registerRequest);
 
         // Returns an authentication response containing the JWT token
-        return new AuthenticationResponse(jwtToken);
+        return jwtToken;
     }
 
 
@@ -174,8 +165,7 @@ public class AuthenticationService {
         // If an account with the given email already exists, throws an exception
         var user = userService.findUserByEmail(email);
 
-        Date expirationDate = new Date(System.currentTimeMillis() + expirationTimeForResetPassword);
-        var jwtToken = jwtService.generateToken(user, expirationDate);
+        var jwtToken = jwtService.generateTokenForResetPassword(user.getUsername());
 
         // create the link for the account activation
         String resetPasswordLink = "http://localhost:9090/api/v1/auth/reset-password/" + jwtToken;

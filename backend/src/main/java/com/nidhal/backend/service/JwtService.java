@@ -26,9 +26,19 @@ public class JwtService {
     // current time
     private final Date ISSUED_AT = new Date(System.currentTimeMillis());
 
-    @Value("${expiration.default}")
-    private long defaultExpiration;
-    private final Date DEFAULT_EXPIRATION_DATE = new Date(System.currentTimeMillis() + defaultExpiration);
+    @Value("${expiration.refresh-token}")
+    private long refreshTokenExpirationTimeInMs;
+
+    @Value("${expiration.access-token}")
+    private long accessTokenExpirationTimeInMs;
+
+
+    @Value("${expiration.reset-password}")
+    private long resetPasswordExpirationTimeInMs;
+
+    @Value("${expiration.enable-account}")
+    private long enableAccountExpirationTimeInMs;
+
 
     @Value("${secret-key}")
     private String SECRET_KEY;
@@ -80,42 +90,45 @@ public class JwtService {
         return claims;
     }
 
-    /**
-     * Generates a JWT token for a given user with a specified expiration date.
-     *
-     * @param user           the user to generate the token for
-     * @param expirationDate the expiration date of the token
-     * @return the generated token
-     */
-    public String generateToken(User user, Date expirationDate) {
-
+    // this used for the account verification, reset password, etc.
+    public String generateToken(String username, long expirationTimeInMs) {
+        final Date expirationDate = new Date(System.currentTimeMillis() + expirationTimeInMs);
         return Jwts
                 .builder()
-                .setClaims(getUserClaims(user)) // add user claims
-                .setSubject(user.getUsername())
+                .setSubject(username)
                 .setIssuedAt(ISSUED_AT)
                 .setExpiration(expirationDate) // set expiration date
                 .signWith(getSignInKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
 
-    /**
-     * Generates a JWT token for a given user with the default expiration date.
-     *
-     * @param user the user to generate the token for
-     * @return the generated token
-     */
-    public String generateToken(User user) {
+
+    public String generateRefreshToken(String username) {
+        return generateToken(username, refreshTokenExpirationTimeInMs);
+    }
+
+    public String generateTokenForEnableAccount(String username) {
+        return generateToken(username, enableAccountExpirationTimeInMs);
+    }
+
+    public String generateTokenForResetPassword(String username) {
+        return generateToken(username, resetPasswordExpirationTimeInMs);
+    }
+
+
+    public String generateAccessToken(User user) {
+        final Date accessTokenExpirationDate = new Date(System.currentTimeMillis() + accessTokenExpirationTimeInMs);
 
         return Jwts
                 .builder()
                 .setClaims(getUserClaims(user)) // add user claims
                 .setSubject(user.getUsername())
                 .setIssuedAt(ISSUED_AT)
-                .setExpiration(DEFAULT_EXPIRATION_DATE)
+                .setExpiration(accessTokenExpirationDate)
                 .signWith(getSignInKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
+
 
     /**
      * Checks if the given JWT token is valid for the provided user.

@@ -3,11 +3,14 @@ package com.nidhal.backend.controller;
 
 import com.nidhal.backend.requests.*;
 import com.nidhal.backend.service.AuthenticationService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.io.IOException;
 
 
 @RestController
@@ -18,7 +21,7 @@ public class AuthenticationController {
     private final AuthenticationService authenticationService;
 
     @PostMapping("/register")
-    public ResponseEntity<AuthenticationResponse> register(
+    public ResponseEntity<String> register(
             @Valid @RequestBody RegisterRequest request) {
         return ResponseEntity.ok(authenticationService.registerUser(request));
     }
@@ -31,7 +34,7 @@ public class AuthenticationController {
 
         AuthenticationResponse responseToken = authenticationService.authenticate(request);
 
-        servletResponse.setHeader("Authorization", "Bearer " + responseToken.token());
+        servletResponse.setHeader("Authorization", "Bearer " + responseToken.accessToken());
         return ResponseEntity.ok(responseToken);
     }
 
@@ -40,6 +43,15 @@ public class AuthenticationController {
         authenticationService.enableUser(token);
         return ResponseEntity.ok("Account enabled successfully");
     }
+
+    /*@PostMapping("/refresh-token")
+    public void refreshToken(
+            HttpServletRequest request,
+            HttpServletResponse response
+    ) throws IOException {
+        authenticationService.refreshToken(request, response);
+    }*/
+
 
     @PostMapping("/reset-password")
     public ResponseEntity<String> resetPassword(
