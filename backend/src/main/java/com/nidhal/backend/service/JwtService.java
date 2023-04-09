@@ -26,21 +26,21 @@ public class JwtService {
     // current time
     private final Date ISSUED_AT = new Date(System.currentTimeMillis());
 
-    @Value("${expiration.refresh-token}")
+    @Value("${jwt.expiration.refresh-token}")
     private long refreshTokenExpirationTimeInMs;
 
-    @Value("${expiration.access-token}")
+    @Value("${jwt.expiration.access-token}")
     private long accessTokenExpirationTimeInMs;
 
 
-    @Value("${expiration.reset-password}")
+    @Value("${jwt.expiration.reset-password}")
     private long resetPasswordExpirationTimeInMs;
 
-    @Value("${expiration.enable-account}")
+    @Value("${jwt.expiration.enable-account}")
     private long enableAccountExpirationTimeInMs;
 
 
-    @Value("${secret-key}")
+    @Value("${jwt.secret-key}")
     private String SECRET_KEY;
 
 

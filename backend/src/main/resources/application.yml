@@ -32,10 +32,11 @@ spring:
           starttls:
             enable: true
 
-expiration:
-  access-token: 86400000              # 24 hours
-  refresh-token: 86400000         # 24 hours
-  reset-password: 900000         # 15 minutes
-  enable-account: 900000         # 15 minutes
+jwt:
+  expiration:
+    access-token: 86400000          # 1 hour
+    refresh-token: 604800000       # 7 days
+    reset-password: 900000         # 15 minutes
+    enable-account: 900000
 
-secret-key: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+  secret-key: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
