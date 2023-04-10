@@ -1,6 +1,7 @@
 package com.nidhal.backend.service;
 
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nidhal.backend.entity.Token;
 import com.nidhal.backend.entity.User;
 import com.nidhal.backend.exception.EmailAlreadyExistsException;
@@ -9,13 +10,17 @@ import com.nidhal.backend.repository.TokenRepository;
 import com.nidhal.backend.requests.AuthenticationRequest;
 import com.nidhal.backend.requests.AuthenticationResponse;
 import com.nidhal.backend.requests.RegisterRequest;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 
 
 @Service
@@ -217,5 +222,28 @@ public class AuthenticationService {
     private boolean isPasswordAndPasswordConfirmMatches(RegisterRequest registerRequest) {
         // checks if the password and password confirm are the same
         return registerRequest.password().equals(registerRequest.confirmPassword());
+    }
+
+    public void refreshToken(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        final String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
+        final String refreshToken;
+        final String userEmail;
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return;
+        }
+        // get the refresh token from the header
+        refreshToken = authHeader.substring(7);
+        // get the user email from the token
+        userEmail = jwtService.extractUsername(refreshToken);
+        if (userEmail != null) {
+            var user = userService.findUserByEmail(userEmail);
+            if (jwtService.isTokenValid(refreshToken, user)) {
+                var accessToken = jwtService.generateAccessToken(user);
+                revokeAllUserTokens(user);
+                saveUserToken(user, accessToken);
+                var authResponse = new AuthenticationResponse(accessToken, refreshToken);
+                new ObjectMapper().writeValue(response.getOutputStream(), authResponse);
+            }
+        }
     }
 }
