@@ -6,7 +6,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationProvider;
-import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -31,7 +30,7 @@ import static org.springframework.security.config.Customizer.withDefaults;
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
-@EnableGlobalMethodSecurity(prePostEnabled = true)
+/*@EnableGlobalMethodSecurity(prePostEnabled = true)*/
 public class SecurityConfig {
     private final JwtAuthorizationFilter jwtAuthFilter; // this is the filter that will be used to authenticate requests
     private final AuthenticationProvider authenticationProvider; // this is the provider that will be used to authenticate requests
@@ -70,6 +69,22 @@ public class SecurityConfig {
                                         "/api/v1/auth/authenticate",
                                         "/api/v1/auth/reset-password/**")
                                 .permitAll()
+
+                                // allow only authenticated users to this endpoint
+                                .requestMatchers(HttpMethod.GET,
+                                        "api/v1/home/user")
+                                .hasAuthority("ROLE_USER")
+
+                                // allow only authenticated admin to this endpoint
+                                .requestMatchers(HttpMethod.GET,
+                                        "api/v1/home/admin")
+                                .hasAuthority("ROLE_ADMIN")
+
+                                // allow only authenticated doctor to this endpoint
+                                .requestMatchers(HttpMethod.GET,
+                                        "api/v1/home/doctor")
+                                .hasAuthority("ROLE_DOCTOR")
+
 
                                 // any other request must be authenticated
                                 .anyRequest().authenticated()
