@@ -1,7 +1,6 @@
 package com.nidhal.backend.service;
 
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nidhal.backend.entity.Token;
 import com.nidhal.backend.entity.User;
 import com.nidhal.backend.exception.EmailAlreadyExistsException;
@@ -224,26 +223,35 @@ public class AuthenticationService {
         return registerRequest.password().equals(registerRequest.confirmPassword());
     }
 
-    public void refreshToken(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    public AuthenticationResponse refreshToken(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        AuthenticationResponse result = null;
+
         final String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
-        final String refreshToken;
-        final String userEmail;
+
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            return;
-        }
-        // get the refresh token from the header
-        refreshToken = authHeader.substring(7);
-        // get the user email from the token
-        userEmail = jwtService.extractUsername(refreshToken);
-        if (userEmail != null) {
-            var user = userService.findUserByEmail(userEmail);
-            if (jwtService.isTokenValid(refreshToken, user)) {
-                var accessToken = jwtService.generateAccessToken(user);
-                revokeAllUserTokens(user);
-                saveUserToken(user, accessToken);
-                var authResponse = new AuthenticationResponse(accessToken, refreshToken);
-                new ObjectMapper().writeValue(response.getOutputStream(), authResponse);
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.getWriter().write("Missing or invalid Authorization header.");
+        } else {
+            try {
+                final String refreshToken = authHeader.substring(7).trim();
+                final String userEmail = jwtService.extractUsername(refreshToken);
+
+                if (userEmail != null) {
+                    var user = userService.findUserByEmail(userEmail);
+
+                    if (jwtService.isTokenValid(refreshToken, user)) {
+                        var accessToken = jwtService.generateAccessToken(user);
+                        revokeAllUserTokens(user);
+                        saveUserToken(user, accessToken);
+                        result = new AuthenticationResponse(accessToken, refreshToken);
+                    }
+                }
+            } catch (Exception e) {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.getWriter().write("Invalid token.");
             }
         }
+
+        return result;
     }
 }

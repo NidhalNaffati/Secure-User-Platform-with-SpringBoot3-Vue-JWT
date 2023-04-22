@@ -28,13 +28,9 @@ public class AuthenticationController {
 
     @PostMapping("/authenticate")
     public ResponseEntity<AuthenticationResponse> authenticate(
-            @Valid @RequestBody AuthenticationRequest request,
-            HttpServletResponse servletResponse
+            @Valid @RequestBody AuthenticationRequest request
     ) {
-
         AuthenticationResponse responseToken = authenticationService.authenticate(request);
-
-        servletResponse.setHeader("Authorization", "Bearer " + responseToken.accessToken());
         return ResponseEntity.ok(responseToken);
     }
 
@@ -45,11 +41,12 @@ public class AuthenticationController {
     }
 
     @PostMapping("/refresh-token")
-    public void refreshToken(
+    public ResponseEntity<AuthenticationResponse> refreshToken(
             HttpServletRequest request,
             HttpServletResponse response
     ) throws IOException {
-        authenticationService.refreshToken(request, response);
+        AuthenticationResponse responseToken = authenticationService.refreshToken(request, response);
+        return ResponseEntity.ok(responseToken);
     }
 
 
@@ -68,6 +65,5 @@ public class AuthenticationController {
         authenticationService.upDatePassword(token, request.password(), request.passwordConfirm());
         return ResponseEntity.ok("Password reset successfully");
     }
-
 
 }
