@@ -65,6 +65,7 @@ public class SecurityConfig {
                                 // allow access to the static resources to everyone
                                 .requestMatchers(HttpMethod.POST,
                                         "/api/v1/auth/register",
+                                        "/api/v1/auth/refresh-token",
                                         "/api/v1/auth/enable-user/**",
                                         "/api/v1/auth/authenticate",
                                         "/api/v1/auth/reset-password/**")

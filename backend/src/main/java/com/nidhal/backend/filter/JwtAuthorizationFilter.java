@@ -51,12 +51,11 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
             @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
 
-        if (request.getServletPath().contains("/api/v1/register") ||
-            request.getServletPath().contains("/api/v1/auth") ||
-            request.getServletPath().contains("/api/v1/reset-password")
+        if (request.getServletPath().contains("/api/v1/auth/register") ||
+            request.getServletPath().contains("/api/v1/auth/refresh-token") ||
+            request.getServletPath().contains("/api/v1/auth/reset-password")
         ) {
-            log.error("request.getServletPath(): {}", request.getServletPath());
-            log.error("skipping the filter");
+            log.info("skipping the filter for the following request url {} : ", request.getServletPath());
             filterChain.doFilter(request, response);
         } else {
 
