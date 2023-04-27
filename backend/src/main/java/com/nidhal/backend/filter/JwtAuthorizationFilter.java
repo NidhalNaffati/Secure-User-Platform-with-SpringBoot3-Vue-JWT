@@ -1,6 +1,5 @@
 package com.nidhal.backend.filter;
 
-
 import com.nidhal.backend.entity.User;
 import com.nidhal.backend.service.JwtService;
 import com.nidhal.backend.service.TokenService;
@@ -23,6 +22,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.List;
 
 import static jakarta.servlet.http.HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
 import static jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED;
@@ -43,6 +43,20 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
     private final UserService userService;
     private final TokenService tokenService;
 
+    // The Authorization header is in the form of Bearer <token>. The prefix Bearer is removed to extract the token.
+    private static final String AUTHORIZATION_HEADER = "Authorization";
+
+    // The prefix Bearer is removed to extract the token.
+    private static final String BEARER_PREFIX = "Bearer ";
+
+    // The list of public endpoints that do not require authentication
+    private final List<String> PUBLIC_ENDPOINTS = List.of(
+            "/api/v1/auth/register",
+            "/api/v1/auth/refresh-token",
+            "/api/v1/auth/enable-user",
+            "/api/v1/auth/authenticate",
+            "/api/v1/auth/reset-password"
+    );
 
     @Override
     protected void doFilterInternal(
@@ -51,20 +65,18 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
             @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
 
-        if (request.getServletPath().contains("/api/v1/auth/register") ||
-            request.getServletPath().contains("/api/v1/auth/refresh-token") ||
-            request.getServletPath().contains("/api/v1/auth/reset-password")
+        if (PUBLIC_ENDPOINTS.contains(request.getServletPath())
         ) {
             log.info("skipping the filter for the following request url {} : ", request.getServletPath());
             filterChain.doFilter(request, response);
         } else {
 
-            final String authHeader = request.getHeader("Authorization");
+            final String authHeader = request.getHeader(AUTHORIZATION_HEADER);
             final String jwt;
             final String userEmail;
 
             // Check if Authorization header is missing or does not contain a valid JWT
-            if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            if (authHeader != null && authHeader.startsWith(BEARER_PREFIX)) {
                 try {
                     // Extract the JWT from the Authorization header
                     jwt = authHeader.substring(7);
@@ -79,11 +91,9 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
 
                         var isTokenValid = tokenService.isTokenValid(jwt);
                         // Check if the JWT is valid for the retrieved userDetails
-                        log.info("isTokenValid: {}", isTokenValid);
 
                         if (jwtService.isTokenValid(jwt, user) && isTokenValid) {
                             // create a new authentication token with the retrieved user
-                            log.warn("User {} is authenticated with authorities {}", user.getUsername(), user.getAuthorities());
                             UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                                     user,
                                     null,
@@ -101,28 +111,29 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
                     }
                     // Proceed with the filter chain
                     filterChain.doFilter(request, response);
-                } catch (ExpiredJwtException ex) {
+                } catch (ExpiredJwtException ex) { // catch the exception if the token has expired
                     log.warn("JWT has expired: {}", ex.getMessage());
                     response.setStatus(SC_UNAUTHORIZED);
-                    response.getWriter().write("JWT has expired from the filter");
-                } catch (MalformedJwtException ex) {
+                    response.getWriter().write("Access token expired");
+                } catch (MalformedJwtException ex) { // catch the exception if the token is malformed
                     log.warn("JWT is malformed: {}", ex.getMessage());
                     response.setStatus(SC_UNAUTHORIZED);
                     response.getWriter().write("JWT is malformed");
-                } catch (SignatureException ex) {
+                } catch (SignatureException ex) { // catch the exception if the token is invalid
                     log.warn("JWT signature is invalid: {}", ex.getMessage());
                     response.setStatus(SC_UNAUTHORIZED);
                     response.getWriter().write("JWT signature is invalid");
-                } catch (UnsupportedJwtException exception) {
+                } catch (UnsupportedJwtException exception) { // catch the exception if the token is unsupported
                     log.warn("JWT is unsupported: {}", exception.getMessage());
                     response.setStatus(SC_UNAUTHORIZED);
                     response.getWriter().write("JWT is unsupported");
-                } catch (Exception ex) {
+                } catch (Exception ex) { // catch the exception if any other error occurs
                     log.error("Failed to extract username from JWT: {}", ex.getMessage());
                     response.sendError(SC_INTERNAL_SERVER_ERROR, "Failed to extract username from JWT");
                 }
             } else {
-                log.error("Authorization header is missing or does not contain a valid JWT");
+                // Authorization header is missing or does not contain a valid JWT
+                log.error("Authorization header is missing or does not contain a valid JWT for the following URL : {}  ", request.getServletPath());
                 filterChain.doFilter(request, response);
             }
         }
