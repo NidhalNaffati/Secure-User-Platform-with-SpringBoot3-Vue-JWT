@@ -1,4 +1,4 @@
-package com.nidhal.backend.entity;
+package com.nidhal.backend.model;
 
 public enum Role {
     ROLE_USER,

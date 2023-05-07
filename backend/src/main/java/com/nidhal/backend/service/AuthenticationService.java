@@ -69,10 +69,9 @@ public class AuthenticationService {
         // If the authentication is successful, retrieves the user from the database and generates a JWT token
         User user = userService.validateCredentials(request.email(), request.password());
         log.info("User {} successfully authenticated with role {}", user.getFirstName(), user.getRole());
-        log.info("User {} successfully authenticated with authority {}", user.getFirstName(), user.getAuthorities());
 
         String accessToken = jwtService.generateAccessToken(user);
-        String refreshToken = jwtService.generateRefreshToken(user.getUsername());
+        String refreshToken = jwtService.generateRefreshToken(user.getEmail());
 
         revokeAllUserTokens(user);
         saveUserToken(user, accessToken);
@@ -136,7 +135,7 @@ public class AuthenticationService {
 
         var savedUser = userService.saveUser(user);
 
-        var jwtToken = jwtService.generateTokenForEnableAccount(user.getUsername());
+        var jwtToken = jwtService.generateTokenForEnableAccount(user.getEmail());
 
         // create the link for the account activation
         String activationLink = "http://localhost:9090/api/v1/auth/enable-user/" + jwtToken;
@@ -169,7 +168,7 @@ public class AuthenticationService {
         // If an account with the given email already exists, throws an exception
         var user = userService.findUserByEmail(email);
 
-        var jwtToken = jwtService.generateTokenForResetPassword(user.getUsername());
+        var jwtToken = jwtService.generateTokenForResetPassword(user.getEmail());
 
         // create the link for the account activation
         String resetPasswordLink = "http://localhost:9090/api/v1/auth/reset-password/" + jwtToken;
@@ -234,15 +233,15 @@ public class AuthenticationService {
         } else {
             try {
                 final String refreshToken = authHeader.substring(7).trim();
-                final String userEmail = jwtService.extractUsername(refreshToken);
+                var username = jwtService.extractUsername(refreshToken);
 
-                if (userEmail != null) {
-                    var user = userService.findUserByEmail(userEmail);
+                if (username != null) {
+                    var userDetails = userService.loadUserByUsername(username);
 
-                    if (jwtService.isTokenValid(refreshToken, user)) {
-                        var accessToken = jwtService.generateAccessToken(user);
-                        revokeAllUserTokens(user);
-                        saveUserToken(user, accessToken);
+                    if (jwtService.isTokenValid(refreshToken, userDetails)) {
+                        var accessToken = jwtService.generateAccessToken(userDetails.user());
+                        revokeAllUserTokens(userDetails.user());
+                        saveUserToken(userDetails.user(), accessToken);
                         result = new AuthenticationResponse(accessToken, refreshToken);
                     }
                 }

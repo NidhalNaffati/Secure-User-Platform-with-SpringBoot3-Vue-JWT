@@ -122,7 +122,7 @@ public class JwtService {
         return Jwts
                 .builder()
                 .setClaims(getUserClaims(user)) // add user claims
-                .setSubject(user.getUsername())
+                .setSubject(user.getEmail())
                 .setIssuedAt(ISSUED_AT)
                 .setExpiration(accessTokenExpirationDate)
                 .signWith(getSignInKey(), SignatureAlgorithm.HS256)

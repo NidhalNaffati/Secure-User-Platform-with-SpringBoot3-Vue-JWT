@@ -2,7 +2,7 @@ package com.nidhal.backend.service;
 
 
 import com.nidhal.backend.entity.User;
-import com.nidhal.backend.entity.UserDetailsImpl;
+import com.nidhal.backend.model.UserDetailsImpl;
 import com.nidhal.backend.exception.EmailAlreadyExistsException;
 import com.nidhal.backend.exception.PasswordDontMatchException;
 import com.nidhal.backend.exception.UserNotFoundException;

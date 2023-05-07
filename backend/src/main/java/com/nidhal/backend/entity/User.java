@@ -1,15 +1,10 @@
 package com.nidhal.backend.entity;
 
+import com.nidhal.backend.model.Role;
 import jakarta.persistence.*;
 import lombok.*;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails;
 
-import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 @Getter
 @Setter
@@ -22,7 +17,7 @@ import java.util.Set;
         uniqueConstraints = {
                 @UniqueConstraint(columnNames = "email")
         })
-public class User implements UserDetails {
+public class User {
     @Id
     @SequenceGenerator(
             name = "user_generator",
@@ -56,49 +51,16 @@ public class User implements UserDetails {
      * the user by default is not enable, until he activates his account.
      */
     @Column(name = "enabled")
-    private boolean enabled = false;
+    private boolean enabled; // by default is false, until the user activates his account via email verification.
+
+    private boolean accountNonLocked; // by default is true, until the user is blocked by the admin.
+
 
     @OneToMany(mappedBy = "user")
     private List<Token> tokens;
 
     public static User of(String firstName, String lastName, String email, String password, String confirmPassword, Role role) {
-        return new User(null, firstName, lastName, email, password, confirmPassword, role, false, null);
-    }
-
-    public boolean isEnabled() {
-        return enabled;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-
-    public String getUsername() {
-        return email;
-    }
-
-
-    @Override
-    public Collection<GrantedAuthority> getAuthorities() {
-        Set<GrantedAuthority> authorities = new HashSet<>();
-        authorities.add(new SimpleGrantedAuthority(role.toString()));
-        return authorities;
-    }
-
-    @Override
-    public boolean isAccountNonExpired() {
-        return true;
-    }
-
-    @Override
-    public boolean isAccountNonLocked() {
-        return true;
-    }
-
-    @Override
-    public boolean isCredentialsNonExpired() {
-        return true;
+        return new User(null, firstName, lastName, email, password, confirmPassword, role, false, true, null);
     }
 
 }

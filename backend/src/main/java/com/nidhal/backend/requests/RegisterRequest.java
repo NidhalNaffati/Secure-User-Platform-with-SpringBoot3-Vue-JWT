@@ -1,7 +1,7 @@
 package com.nidhal.backend.requests;
 
 
-import com.nidhal.backend.entity.Role;
+import com.nidhal.backend.model.Role;
 import com.nidhal.backend.entity.User;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
