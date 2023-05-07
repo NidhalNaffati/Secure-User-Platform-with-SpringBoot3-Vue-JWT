@@ -2,6 +2,7 @@ package com.nidhal.backend.service;
 
 
 import com.nidhal.backend.entity.User;
+import com.nidhal.backend.entity.UserDetailsImpl;
 import com.nidhal.backend.exception.EmailAlreadyExistsException;
 import com.nidhal.backend.exception.PasswordDontMatchException;
 import com.nidhal.backend.exception.UserNotFoundException;
@@ -10,6 +11,8 @@ import com.nidhal.backend.repository.UserRepository;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,10 +25,19 @@ import java.util.List;
  */
 @Service
 @AllArgsConstructor @Slf4j
-public class UserService {
+public class UserService implements UserDetailsService {
     private final UserRepository userRepository;
     private final TokenRepository tokenRepository;
     private final PasswordEncoder passwordEncoder;
+
+    @Override
+    public UserDetailsImpl loadUserByUsername(String username) throws UsernameNotFoundException {
+        log.info("loading user by username: {}", username);
+        User user = userRepository
+                .findByEmail(username) // find the user by email
+                .orElseThrow(() -> new UsernameNotFoundException("user not found")); // if the user is not found, throw an exception
+        return new UserDetailsImpl(user);
+    }
 
 
     /**

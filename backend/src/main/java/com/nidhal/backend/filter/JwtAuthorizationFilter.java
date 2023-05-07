@@ -1,6 +1,6 @@
 package com.nidhal.backend.filter;
 
-import com.nidhal.backend.entity.User;
+import com.nidhal.backend.entity.UserDetailsImpl;
 import com.nidhal.backend.service.JwtService;
 import com.nidhal.backend.service.TokenService;
 import com.nidhal.backend.service.UserService;
@@ -73,7 +73,7 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
 
             final String authHeader = request.getHeader(AUTHORIZATION_HEADER);
             final String jwt;
-            final String userEmail;
+            final String username;
 
             // Check if Authorization header is missing or does not contain a valid JWT
             if (authHeader != null && authHeader.startsWith(BEARER_PREFIX)) {
@@ -82,22 +82,22 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
                     jwt = authHeader.substring(7);
 
                     // Extract the user email from the JWT and check if it is valid
-                    userEmail = jwtService.extractUsername(jwt);
+                    username = jwtService.extractUsername(jwt);
 
 
-                    if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                    if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                         // Retrieve the userDetails from the database
-                        User user = userService.findUserByEmail(userEmail);
+                        UserDetailsImpl userDetails = userService.loadUserByUsername(username);
 
                         var isTokenValid = tokenService.isTokenValid(jwt);
                         // Check if the JWT is valid for the retrieved userDetails
 
-                        if (jwtService.isTokenValid(jwt, user) && isTokenValid) {
+                        if (jwtService.isTokenValid(jwt, userDetails) && isTokenValid) {
                             // create a new authentication token with the retrieved user
                             UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                                    user,
+                                    userDetails,
                                     null,
-                                    user.getAuthorities()
+                                    userDetails.getAuthorities()
                             );
 
                             // Set the details of the authentication token
