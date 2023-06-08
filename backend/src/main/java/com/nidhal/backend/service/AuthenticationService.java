@@ -29,20 +29,7 @@ public class AuthenticationService {
     private final UserService userService;
     private final EmailService emailService;
     private final JwtService jwtService;
-    private final TokenRepository tokenRepository;
-
-
-    public AuthenticationService(AuthenticationManager authenticationManager,
-                                 EmailService emailService,
-                                 UserService userService,
-                                 JwtService jwtService,
-                                 TokenRepository tokenRepository) {
-        this.authenticationManager = authenticationManager;
-        this.emailService = emailService;
-        this.userService = userService;
-        this.jwtService = jwtService;
-        this.tokenRepository = tokenRepository;
-    }
+    private final TokenService tokenService;
 
     /**
      * Authenticates the user and generates a JWT token.
@@ -73,40 +60,11 @@ public class AuthenticationService {
         String accessToken = jwtService.generateAccessToken(user);
         String refreshToken = jwtService.generateRefreshToken(user.getEmail());
 
-        revokeAllUserTokens(user);
-        saveUserToken(user, accessToken);
-        log.info("User successfully authenticated with request {}", request);
+        tokenService.revokeAllUserTokens(user);
+        tokenService.saveUserToken(user, accessToken);
 
         // Returns an authentication response containing the JWT token
         return new AuthenticationResponse(accessToken, refreshToken);
-    }
-
-    private void saveUserToken(User user, String jwtToken) {
-        var token = Token.builder()
-                .user(user)
-                .token(jwtToken)
-                .expired(false)
-                .revoked(false)
-                .build();
-        tokenRepository.save(token);
-    }
-
-
-    private void revokeAllUserTokens(User user) {
-        // get all valid tokens for the user
-        var validUserTokens = tokenRepository.findAllValidTokenByUser(user.getId());
-
-        // if there is no valid token, return
-        if (validUserTokens.isEmpty())
-            return;
-
-        // revoke all valid tokens
-        validUserTokens.forEach(token -> {
-            token.setExpired(true);
-            token.setRevoked(true);
-        });
-        // save all revoked tokens
-        tokenRepository.saveAll(validUserTokens);
     }
 
     /**
@@ -149,7 +107,7 @@ public class AuthenticationService {
             // throw new MailSendException(registerRequest.email());
         }
 
-        saveUserToken(savedUser, jwtToken);
+        tokenService.saveUserToken(savedUser, jwtToken);
         log.info("User successfully registered with request {}", registerRequest);
 
         // Returns an authentication response containing the JWT token
