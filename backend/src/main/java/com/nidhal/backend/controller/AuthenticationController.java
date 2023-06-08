@@ -3,6 +3,7 @@ package com.nidhal.backend.controller;
 
 import com.nidhal.backend.exception.PasswordDontMatchException;
 import com.nidhal.backend.exception.UserNotFoundException;
+import com.nidhal.backend.model.EmailRequest;
 import com.nidhal.backend.requests.AuthenticationRequest;
 import com.nidhal.backend.requests.AuthenticationResponse;
 import com.nidhal.backend.requests.RegisterRequest;
@@ -48,7 +49,7 @@ public class AuthenticationController {
             authenticationService.enableUser(token);
             // If the enableUser method succeeds, perform the redirect
             return ResponseEntity.status(HttpStatus.FOUND)
-                    .header("Location", "http://localhost:8080/login")
+                    .header("Location", "http://localhost:5173/login")
                     .body(null);
         } catch (ExpiredJwtException e) { // ExpiredJwtException is a custom exception
             return ResponseEntity
@@ -73,6 +74,12 @@ public class AuthenticationController {
         return ResponseEntity.ok(responseToken);
     }
 
+    @PostMapping("reset-password")
+    public ResponseEntity<String> resetPassword(
+            @Valid @RequestBody EmailRequest request
+    ) {
+        return ResponseEntity.ok(authenticationService.sendResetPasswordRequestToUser(request.email()));
+    }
 
     @PostMapping("reset-password/{token}")
     public ResponseEntity<String> resetPassword(
@@ -84,7 +91,7 @@ public class AuthenticationController {
             authenticationService.upDatePassword(token, password, passwordConfirm);
             // If the upDatePassword method succeeds, perform the redirect
             return ResponseEntity.status(HttpStatus.FOUND)
-                    .header("Location", "http://localhost:8080/login")
+                    .header("Location", "http://localhost:5173/login")
                     .body(null);
         } catch (PasswordDontMatchException e) { // PasswordDontMatchException is a custom exception
             return ResponseEntity

@@ -2,6 +2,7 @@ package com.nidhal.backend.config;
 
 import com.nidhal.backend.filter.JwtAuthorizationFilter;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -20,6 +21,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.List;
 
+import static jakarta.servlet.http.HttpServletResponse.SC_FORBIDDEN;
 import static org.springframework.security.config.Customizer.withDefaults;
 
 /**
@@ -27,10 +29,10 @@ import static org.springframework.security.config.Customizer.withDefaults;
  * <p>
  * It enables web security and registers a JwtAuthenticationFilter and AuthenticationProvider.
  */
+@Slf4j
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
-/*@EnableGlobalMethodSecurity(prePostEnabled = true)*/
 public class SecurityConfig {
     private final JwtAuthorizationFilter jwtAuthFilter; // this is the filter that will be used to authenticate requests
     private final AuthenticationProvider authenticationProvider; // this is the provider that will be used to authenticate requests
@@ -58,33 +60,43 @@ public class SecurityConfig {
                                 .frameOptions().sameOrigin()
                 )
 
+                // set up the Exception Handler
+                .exceptionHandling(
+                        exceptionHandling -> exceptionHandling
+                                .accessDeniedHandler((request, response, accessDeniedException) -> {
+                                    response.setStatus(SC_FORBIDDEN);
+                                    response.getWriter().write("access denied");
+                                })
+                )
+
                 // set up the authorization rules
                 .authorizeHttpRequests(
                         authorizeHttpRequests -> authorizeHttpRequests
 
                                 // allow access to the static resources to everyone
                                 .requestMatchers(HttpMethod.POST,
-                                        "/api/v1/auth/register",
+                                        "/api/v1/auth/register/**",
                                         "/api/v1/auth/refresh-token",
                                         "/api/v1/auth/enable-user/**",
                                         "/api/v1/auth/authenticate",
                                         "/api/v1/auth/reset-password/**")
                                 .permitAll()
 
-                                // allow only authenticated users to this endpoint
+
+                                // allow only authenticated doctor to this endpoint
                                 .requestMatchers(HttpMethod.GET,
-                                        "api/v1/home/user")
+                                        "/api/v1/doctor/**")
+                                .hasAuthority("ROLE_DOCTOR")
+
+                                // allow only authenticated user to this endpoint
+                                .requestMatchers(HttpMethod.GET,
+                                        "/api/v1/user/**")
                                 .hasAuthority("ROLE_USER")
 
                                 // allow only authenticated admin to this endpoint
                                 .requestMatchers(HttpMethod.GET,
-                                        "api/v1/home/admin")
+                                        "/api/v1/admin/**")
                                 .hasAuthority("ROLE_ADMIN")
-
-                                // allow only authenticated doctor to this endpoint
-                                .requestMatchers(HttpMethod.GET,
-                                        "api/v1/home/doctor")
-                                .hasAuthority("ROLE_DOCTOR")
 
 
                                 // any other request must be authenticated
@@ -126,21 +138,28 @@ public class SecurityConfig {
         final CorsConfiguration corsConfiguration = new CorsConfiguration();
 
 
-        corsConfiguration.setAllowedOrigins(
+        corsConfiguration.setAllowedOriginPatterns(
+                List.of("*")
+        );
+
+        corsConfiguration.setAllowedMethods(
                 List.of(
-                        "http://localhost:8080",
-                        "http://localhost:8081",
-                        "http://localhost:9090"
+                        "GET",
+                        "POST",
+                        "PUT",
+                        "DELETE"
+                )
+        );
+
+
+        corsConfiguration.setAllowedHeaders(
+                List.of(
+                        "Authorization",
+                        "Content-Type",
+                        "Access-Control-Allow-Origin",
+                        "Access-Control-Allow-Headers",
+                        "Access-Control-Expose-Headers"
                 ));
-
-        corsConfiguration.setAllowedMethods(List.of(
-                "GET", "POST", "PUT", "DELETE"
-        ));
-
-
-        corsConfiguration.setAllowedHeaders(List.of(
-                "Authorization", "Cache-Control", "Content-Type", "Access-Control-Allow-Origin", "Access-Control-Allow-Headers"
-        ));
 
         corsConfiguration.setAllowCredentials(true);
 

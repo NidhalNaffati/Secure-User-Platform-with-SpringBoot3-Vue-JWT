@@ -6,25 +6,40 @@ export default {
   name: 'ForgottenPasswordView',
   setup() {
     const email = ref('');
-    const errorMessage = ref(false);
-    const successMessage = ref(false);
+    const showErrorMessage = ref(false);
+    const showSuccessMessage = ref(false);
 
     const sendEmail = async () => {
       try {
-        successMessage.value = true;
+        showSuccessMessage.value = true;
         // send the email to the server
-        await axiosInstance.post('auth/reset-password', email.value, {withCredentials: false});
-        // show the success alert
+        const response = await axiosInstance.post(
+            'auth/reset-password',
+            {email: email.value},
+            {withCredentials: false})
+        // check the response status
+        if (response.status === 200 || response.status === 400) {
+          // i m showing a success message for both cases
+          // why ?
+          // because I don't want to tell the user if the email exists or not for security reasons
+          // BE SMART BE SAFE :)
+          showSuccessMessage.value = true;
+        } else {
+          // if the response status is not 200 or 400
+          // then show an error message
+          showErrorMessage.value = true;
+        }
       } catch (error) {
-        console.log(error)
-        errorMessage.value = "Failed! Can't send reset link.";
+        // if the request failed
+        // then show an error message
+        showErrorMessage.value = true;
       }
     };
 
     return {
       email,
-      errorMessage,
-      successMessage,
+      errorMessage: showErrorMessage,
+      successMessage: showSuccessMessage,
       sendEmail,
     };
   },

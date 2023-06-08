@@ -138,7 +138,7 @@ public class AuthenticationService {
         // Send activation link.
         try {
             log.info("Sending reset password link to user with email {}", email);
-            //   emailService.sendResetPasswordRequestToUser(email, user.getFirstName(), resetPasswordLink);
+            emailService.sendResetPasswordRequestToUser(email, user.getFirstName(), resetPasswordLink);
         } catch (Exception e) {
             log.error("Error while sending reset password link to user with email {}", email);
             // throw new MailSendException("Error while sending reset password link to user with email :" + email);
