@@ -1,18 +1,18 @@
 package com.nidhal.backend.service;
 
 
-import com.nidhal.backend.entity.Token;
 import com.nidhal.backend.entity.User;
 import com.nidhal.backend.exception.EmailAlreadyExistsException;
 import com.nidhal.backend.exception.PasswordDontMatchException;
-import com.nidhal.backend.repository.TokenRepository;
 import com.nidhal.backend.requests.AuthenticationRequest;
 import com.nidhal.backend.requests.AuthenticationResponse;
 import com.nidhal.backend.requests.RegisterRequest;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.MalformedJwtException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
@@ -21,10 +21,14 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 
+import static jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED;
+
 
 @Service
+@AllArgsConstructor
 @Slf4j
 public class AuthenticationService {
+
     private final AuthenticationManager authenticationManager;
     private final UserService userService;
     private final EmailService emailService;
@@ -181,34 +185,54 @@ public class AuthenticationService {
     }
 
     public AuthenticationResponse refreshToken(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        // initialize the result
         AuthenticationResponse result = null;
 
-        final String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
+        // extract the token from the request header
+        final String authHeader = request.getHeader("Authorization");
 
+        // if the token is null or does not start with "Bearer ", return an error
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.getWriter().write("Missing or invalid Authorization header.");
-        } else {
+            log.error("Missing or invalid Authorization header.");
+        } else { // else, try to refresh the token
             try {
-                final String refreshToken = authHeader.substring(7).trim();
+                // extract the refresh token
+                log.info("Refreshing token for request {}", request.getHeader("Authorization"));
+                final String refreshToken = authHeader.substring(7);
+
+                // extract the user email from the refresh token
                 var username = jwtService.extractUsername(refreshToken);
+                log.info("User email is {}", username);
 
+                // if the user email is not null, find the user in the database
                 if (username != null) {
+                    // find the user in the database
                     var userDetails = userService.loadUserByUsername(username);
+                    log.info("User is {}", userDetails);
 
+                    // if the user is not null and the refresh token is valid, generate a new access token
                     if (jwtService.isTokenValid(refreshToken, userDetails)) {
-                        var accessToken = jwtService.generateAccessToken(userDetails.user());
-                        revokeAllUserTokens(userDetails.user());
-                        saveUserToken(userDetails.user(), accessToken);
+                        var accessToken = jwtService.generateAccessToken(userDetails.user()); // generate a new access token
+                        log.info("Access token is {}", accessToken);
+                        tokenService.revokeAllUserTokens(userDetails.user()); // revoke all user tokens
+                        tokenService.saveUserToken(userDetails.user(), accessToken); // save the new access token
+
+                        // set the result
                         result = new AuthenticationResponse(accessToken, refreshToken);
                     }
                 }
-            } catch (Exception e) {
-                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                response.getWriter().write("Invalid token.");
+            } catch (ExpiredJwtException ex) { // if the refresh token is expired, return an error
+                log.warn("refresh token expired: {}", ex.getMessage());
+                response.sendError(SC_UNAUTHORIZED, "refresh token expired");
+            } catch (MalformedJwtException e) { // if the refresh token is invalid, return an error
+                log.warn("refresh token expired: {}", e.getMessage());
+                response.sendError(SC_UNAUTHORIZED, "invalid refresh token.");
             }
         }
 
+        // return the result
         return result;
     }
 }
