@@ -4,6 +4,7 @@ package com.nidhal.backend.service;
 import com.nidhal.backend.entity.User;
 import com.nidhal.backend.exception.EmailAlreadyExistsException;
 import com.nidhal.backend.exception.PasswordDontMatchException;
+import com.nidhal.backend.exception.UserNotFoundException;
 import com.nidhal.backend.requests.AuthenticationRequest;
 import com.nidhal.backend.requests.AuthenticationResponse;
 import com.nidhal.backend.requests.RegisterRequest;
@@ -13,6 +14,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.mail.MailSendException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
@@ -72,14 +74,26 @@ public class AuthenticationService {
     }
 
     /**
-     * Registers a new user and generates a JWT token for account activation.
+     * Registers a new user with the provided registration details.
+     * <p>
+     * This method performs the following steps:
+     * 1. Validates the password and password confirmation to ensure they match.
+     * 2. Checks if an account with the given email already exists.
+     * 3. Creates a new user based on the information in the registration request.
+     * 4. Saves the new user in the database.
+     * 5. Generates a JWT token for enabling the user account.
+     * 6. Creates an activation link using the generated JWT token.
+     * 7. Sends the activation link to the user's email address.
+     * 8. Saves the user token for future authentication.
      *
-     * @param registerRequest the request containing user's information
-     * @return the authentication response containing the JWT token
-     * @throws PasswordDontMatchException  if the password and password confirm do not match
-     * @throws EmailAlreadyExistsException if an account with the given email already exists
+     * @param registerRequest The registration details of the user.
+     *                        It contains information such as email, password, first name, etc.
+     * @throws PasswordDontMatchException  If the password and password confirmation do not match.
+     * @throws EmailAlreadyExistsException If an account with the provided email already exists.
+     * @throws MailSendException           If there is an error while sending the activation link to the user.
      */
-    public String registerUser(RegisterRequest registerRequest) {
+
+    public void registerUser(RegisterRequest registerRequest) {
         // If the password and password confirm do not match, throws an exception
         if (!isPasswordAndPasswordConfirmMatches(registerRequest)) {
             log.error("Password and password confirm doesn't match");
@@ -105,17 +119,14 @@ public class AuthenticationService {
         // Send activation link.
         try {
             log.info("Sending activation link to user {}", registerRequest.email());
-            //  emailService.sendActivationLink(registerRequest.email(), registerRequest.firstName(), activationLink);
+            emailService.sendActivationLink(registerRequest.email(), registerRequest.firstName(), activationLink);
         } catch (Exception e) {
             log.error("Error while sending activation link to user {}", registerRequest.email());
-            // throw new MailSendException(registerRequest.email());
+            throw new MailSendException(registerRequest.email());
         }
 
         tokenService.saveUserToken(savedUser, jwtToken);
         log.info("User successfully registered with request {}", registerRequest);
-
-        // Returns an authentication response containing the JWT token
-        return jwtToken;
     }
 
 
@@ -126,7 +137,7 @@ public class AuthenticationService {
      * @param email Email address of the user.
      * @return JWT token.
      */
-    public String sendResetPasswordRequestToUser(String email) {
+    public void sendResetPasswordRequestToUser(String email) {
         // If an account with the given email already exists, throws an exception
         var user = userService.findUserByEmail(email);
 
@@ -139,14 +150,14 @@ public class AuthenticationService {
         try {
             log.info("Sending reset password link to user with email {}", email);
             emailService.sendResetPasswordRequestToUser(email, user.getFirstName(), resetPasswordLink);
+        } catch (UserNotFoundException e) {
+            log.error("User with email {} not found", email);
+            throw new UserNotFoundException(email);
         } catch (Exception e) {
             log.error("Error while sending reset password link to user with email {}", email);
-            // throw new MailSendException("Error while sending reset password link to user with email :" + email);
+            throw new MailSendException("Error while sending reset password link to user with email :" + email);
         }
-
         log.info("Reset password link sent to user with email {}", email);
-        // Returns an authentication response containing the JWT token
-        return jwtToken;
     }
 
 

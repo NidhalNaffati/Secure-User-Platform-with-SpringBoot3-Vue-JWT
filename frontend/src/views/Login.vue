@@ -1,65 +1,72 @@
-<script>
+<script setup>
 import {ref} from 'vue';
 import axiosInstance from '@/api/axiosInstance';
 import {useAuthStore} from '@/stores';
 import {useRouter} from 'vue-router';
 
-export default {
-  name: 'LoginView',
-  setup() {
-    const loginRequest = ref({
-      email: '',
-      password: ''
-    });
-    const errorMessage = ref('');
-    const authStore = useAuthStore();
-    const router = useRouter();
+const loginRequest = ref({
+  email: '',
+  password: ''
+});
+const errorMessage = ref('');
+const authStore = useAuthStore();
+const router = useRouter();
 
-    async function login() {
-      try {
-        // reset the error message
-        errorMessage.value = '';
+async function login() {
+  try {
+    // reset the error message
+    clearErrorMessages();
 
-        // make a login request to the server
-        const response = await axiosInstance.post(
-            'auth/authenticate', // the endpoint
-            loginRequest.value, // the request body
-            {withCredentials: true}
-        );
+    // send the login request to the server
+    const response = await axiosInstance.post(
+        'auth/authenticate', // the endpoint
+        loginRequest.value, // the request body
+        {withCredentials: true}
+    );
 
-        // get the token from the response
-        const accessToken = response.data.access_token;
-        const refreshToken = response.data.refresh_token;
+    // get the token from the response
+    const accessToken = response.data.access_token;
+    const refreshToken = response.data.refresh_token;
 
-        // set the token in local storage
-        localStorage.setItem('access_token', accessToken);
-        localStorage.setItem('refresh_token', refreshToken);
+    // set the token in local storage
+    localStorage.setItem('access_token', accessToken);
+    localStorage.setItem('refresh_token', refreshToken);
 
-        // update the authorization header
-        axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
+    // update the authorization header
+    axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
 
-        // decode the token and get the user role
-        const decodedToken = JSON.parse(atob(accessToken.split('.')[1]));
-        const userRole = decodedToken.role;
+    // decode the token and get the user role
+    const decodedToken = JSON.parse(atob(accessToken.split('.')[1]));
+    const userRole = decodedToken.role;
 
-        // call the stores login method: this will update the stores state
-        authStore.login(userRole);
+    // call the stores login method this will update the stores state
+    authStore.login(userRole);
 
-        // redirect to the home page
-        await router.push('/');
-      } catch (e) {
-        errorMessage.value = e.response.data.message;
-      }
+    // redirect to the home page
+    await router.push('/');
+
+  } catch (error) {
+    if (error.response) {
+      // An error response was received from the server
+      showErrorMessage(error.response.data.message);
+    } else if (error.request) {
+      // The request was made but no response was received.
+      // for example a CORS error
+      showErrorMessage('Unable to connect to the server. Please try again later.');
+    } else {
+      // Something else went wrong
+      showErrorMessage('An error occurred while processing your request.');
     }
-
-    return {
-      loginRequest,
-      errorMessage,
-      login
-    };
   }
+}
+
+const clearErrorMessages = () => {
+  errorMessage.value = '';
 };
 
+const showErrorMessage = (message) => {
+  errorMessage.value = message;
+};
 </script>
 
 <template>

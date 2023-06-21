@@ -1,3 +1,55 @@
+<script setup>
+import axiosInstance from "@/api/axiosInstance";
+import router from "@/router";
+import {ref} from "vue";
+
+const registerRequest = ref({
+  firstName: '',
+  lastName: '',
+  gender: 'MALE',
+  email: '',
+  password: '',
+  role: 'ROLE_USER',
+  confirmPassword: '',
+});
+const errorsArray = ref([]);
+const errorMessage = ref('');
+
+const submit = async () => {
+  try {
+    clearErrors();
+    const response = await axiosInstance.post('auth/register', registerRequest.value);
+    if (response.status === 201)
+      await router.push('/login');
+  } catch (error) {
+    if (error.response) {
+      // An error response was received from the server
+      if (error.response.status === 422)
+        errorsArray.value = error.response.data.message.slice(1, -1).split(', ');
+      else{
+        showErrorMessage(error.response.data);
+      }
+    } else if (error.request) {
+      // The request was made but no response was received.
+      // for example a CORS error
+      showErrorMessage('Unable to connect to the server. Please try again later.');
+    } else {
+      // Something else went wrong
+      showErrorMessage('An error occurred while processing your request.');
+    }
+  }
+};
+
+const showErrorMessage = (message) => {
+  errorMessage.value = message;
+};
+
+const clearErrors = () => {
+  errorsArray.value = [];
+  errorMessage.value = '';
+};
+</script>
+
 <template>
   <section class="py-4 py-md-5 my-5">
     <div class="container py-md-5">
@@ -81,12 +133,15 @@
             <div class="mb-5">
               <button class="btn btn-primary shadow" type="submit">Create account</button>
             </div>
-            <div v-if="errorsArray.length || errorMessage.length" class="alert alert-danger">
-              <ul v-if="errorsArray.length">
+
+            <div v-if="errorMessage" class="alert alert-danger">{{ errorMessage }}</div>
+
+            <div v-if="errorsArray.length" class="alert alert-danger">
+              <ul>
                 <li v-for="(error, index) in errorsArray" :key="index">{{ error }}</li>
               </ul>
-              <p v-if="errorMessage.length">{{ errorMessage }}</p>
             </div>
+            
           </form>
         </div>
       </div>
@@ -94,44 +149,3 @@
   </section>
 </template>
 
-
-<script>
-import axiosInstance from "@/api/axiosInstance";
-import router from "@/router";
-
-export default {
-  name: "SignupUserView",
-  data() {
-    return {
-      registerRequest: {
-        firstName: '',
-        lastName: '',
-        gender: 'MALE',
-        email: '',
-        password: '',
-        role: 'ROLE_USER',
-        confirmPassword: '',
-      },
-      errorsArray: [],
-      errorMessage: '',
-    };
-  },
-  methods: {
-    async submit() {
-      try {
-        this.errorsArray = [];
-        this.errorMessage = '';
-        await axiosInstance.post('auth/register', this.registerRequest);
-        await router.push('/login');
-      } catch (error) {
-        if (error.response.status === 422) {
-          const errorResponse = error.response.data;
-          this.errorsArray = errorResponse.message.slice(1, -1).split(', ');
-        } else {
-          this.errorMessage = error.response.data.message;
-        }
-      }
-    },
-  },
-};
-</script>

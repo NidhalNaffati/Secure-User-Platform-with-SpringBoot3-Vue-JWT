@@ -1,6 +1,7 @@
 package com.nidhal.backend.controller;
 
 
+import com.nidhal.backend.exception.EmailAlreadyExistsException;
 import com.nidhal.backend.exception.PasswordDontMatchException;
 import com.nidhal.backend.exception.UserNotFoundException;
 import com.nidhal.backend.model.EmailRequest;
@@ -15,10 +16,10 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.mail.MailSendException;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
-
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -28,9 +29,19 @@ public class AuthenticationController {
     private final AuthenticationService authenticationService;
 
     @PostMapping("register")
-    public ResponseEntity<String> register(
-            @Valid @RequestBody RegisterRequest request) {
-        return ResponseEntity.ok(authenticationService.registerUser(request));
+    public ResponseEntity<String> register(@Valid @RequestBody RegisterRequest request) {
+        try {
+            authenticationService.registerUser(request);
+            return ResponseEntity.status(HttpStatus.CREATED).body("User registered successfully");
+        } catch (PasswordDontMatchException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Password and password confirm do not match");
+        } catch (EmailAlreadyExistsException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("Email already exists");
+        } catch (MailSendException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error while sending activation link");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error while registering user");
+        }
     }
 
     @PostMapping("authenticate")
@@ -75,10 +86,22 @@ public class AuthenticationController {
     }
 
     @PostMapping("reset-password")
-    public ResponseEntity<String> resetPassword(
+    public ResponseEntity<String> sendResetPasswordRequest(
             @Valid @RequestBody EmailRequest request
     ) {
-        return ResponseEntity.ok(authenticationService.sendResetPasswordRequestToUser(request.email()));
+        try {
+            authenticationService.sendResetPasswordRequestToUser(request.email());
+            return ResponseEntity.ok("Reset password link sent to user with email " + request.email());
+        } catch (UserNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("Email does not exist");
+        } catch (MailSendException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error while sending reset password link");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("An unexpected error occurred while processing the request.");
+        }
     }
 
     @PostMapping("reset-password/{token}")

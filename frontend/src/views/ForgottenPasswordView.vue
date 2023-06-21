@@ -1,48 +1,63 @@
-<script>
+<script setup>
 import {ref} from 'vue';
 import axiosInstance from '@/api/axiosInstance';
 
-export default {
-  name: 'ForgottenPasswordView',
-  setup() {
-    const email = ref('');
-    const showErrorMessage = ref(false);
-    const showSuccessMessage = ref(false);
+const email = ref('');
+const errorMessage = ref('');
+const successMessage = ref('');
 
-    const sendEmail = async () => {
-      try {
-        showSuccessMessage.value = true;
-        // send the email to the server
-        const response = await axiosInstance.post(
-            'auth/reset-password',
-            {email: email.value},
-            {withCredentials: false})
-        // check the response status
-        if (response.status === 200 || response.status === 400) {
-          // i m showing a success message for both cases
-          // why ?
-          // because I don't want to tell the user if the email exists or not for security reasons
-          // BE SMART BE SAFE :)
-          showSuccessMessage.value = true;
-        } else {
-          // if the response status is not 200 or 400
-          // then show an error message
-          showErrorMessage.value = true;
-        }
-      } catch (error) {
-        // if the request failed
-        // then show an error message
-        showErrorMessage.value = true;
+const sendEmail = async () => {
+  try {
+    // clear the success & error messages
+    clearMessages();
+    // send the reset request to the server
+    const response = await axiosInstance.post(
+        'auth/reset-password',
+        {email: email.value},
+        {withCredentials: false}
+    );
+    // check the response status
+    if (response.status === 200) {
+      showSuccessMessage('Check your email for a reset link.');
+    } else {
+      // if the response status is not 200 or 400
+      // then show an error message
+      showErrorMessage(response.data.message);
+    }
+  } catch (e) {
+    if (e.response) {
+      // if the response status is 404 then show a success message
+      if (e.response.status === 404) {
+        // i m showing a success message even if the email doesn't exist
+        // why ?
+        // because I don't want to tell the user if the email exists or not for security reasons
+        // BE SMART BE SAFE :)
+        showSuccessMessage('Check your email for a reset link.');
+      } else {
+        // if the request failed then show an error message
+        showErrorMessage(e.response.data);
       }
-    };
+    } else if (e.request) {
+      // The request was made but no response was received.
+      // for example a CORS error
+      showErrorMessage('Unable to connect to the server. Please try again later.');
+    } else {
+      // Something else went wrong
+      showErrorMessage('An error occurred while processing your request.');
+    }
+  }
+}
+const clearMessages = () => {
+  errorMessage.value = '';
+  successMessage.value = '';
+};
 
-    return {
-      email,
-      errorMessage: showErrorMessage,
-      successMessage: showSuccessMessage,
-      sendEmail,
-    };
-  },
+const showErrorMessage = (message) => {
+  errorMessage.value = message;
+};
+
+const showSuccessMessage = (message) => {
+  successMessage.value = message;
 };
 </script>
 
@@ -71,17 +86,21 @@ export default {
             <div class="mb-5">
               <button class="btn btn-primary shadow" type="submit">Reset password</button>
             </div>
+
             <div v-if="successMessage" class="alert alert-success">
               <p class="mb-0">
-                <strong>Success!</strong> Check your email for a reset link.
+                <strong>Success, Email send successfully.</strong>
+                <br>
+                {{ successMessage }}
               </p>
             </div>
-            <!-- this div is broken at the moment-->
+
             <div v-if="errorMessage" class="alert alert-danger">
               <p class="mb-0">
-                <strong>Failed!</strong> Can't send reset link.
+                <strong>Failed!</strong> {{ errorMessage }}
               </p>
             </div>
+
             <p class="text-muted">Remembered your password?
               <router-link to="/login">Yes
                 <img src="src/assets/img/arrow-right.svg" alt="Arrow Right Icon">
