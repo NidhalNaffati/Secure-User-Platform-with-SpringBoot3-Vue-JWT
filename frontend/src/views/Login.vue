@@ -9,13 +9,14 @@ const loginRequest = ref({
   password: ''
 });
 const errorMessage = ref('');
+const sessionExpired = ref(false);
 const authStore = useAuthStore();
 const router = useRouter();
 
 async function login() {
   try {
     // reset the error message
-    clearErrorMessages();
+    clearMessages();
 
     // send the login request to the server
     const response = await axiosInstance.post(
@@ -60,13 +61,20 @@ async function login() {
   }
 }
 
-const clearErrorMessages = () => {
+const clearMessages = () => {
   errorMessage.value = '';
+  sessionExpired.value = false;
 };
 
 const showErrorMessage = (message) => {
   errorMessage.value = message;
 };
+
+// Check if the route query parameter "sessionExpired" is present
+// if it is set the sessionExpired flag to true, showing the session expired message
+if (router.currentRoute.value.query.sessionExpired) {
+  sessionExpired.value = true;
+}
 </script>
 
 <template>
@@ -101,6 +109,11 @@ const showErrorMessage = (message) => {
               <button class="btn btn-primary shadow" type="submit">Log in</button>
             </div>
             <div v-if="errorMessage" class="alert alert-danger">{{ errorMessage }}</div>
+            <div v-if="sessionExpired" class="alert alert-warning">
+              Your session has expired.
+              <br>
+              Please log in again.
+            </div>
             <p class="text-muted">Dont have an account?
               <router-link to="/signup">Sign up
                 <img src="src/assets/img/arrow-right.svg" alt="Arrow Right Icon">

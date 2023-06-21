@@ -141,7 +141,6 @@ const clearErrors = () => {
                 <li v-for="(error, index) in errorsArray" :key="index">{{ error }}</li>
               </ul>
             </div>
-            
           </form>
         </div>
       </div>
