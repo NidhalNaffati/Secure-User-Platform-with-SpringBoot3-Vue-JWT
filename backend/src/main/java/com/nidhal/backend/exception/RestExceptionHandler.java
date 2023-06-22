@@ -84,20 +84,6 @@ public class RestExceptionHandler {
 
 
     /**
-     * Handles EmailDoestExist and returns a ResponseEntity with an ErrorResponse containing the error message.
-     *
-     * @return a ResponseEntity with an ErrorResponse containing the error message
-     */
-    @ExceptionHandler(EmailDoestExist.class)
-    public ResponseEntity<Object> handleEmailDoestExist() {
-        ErrorResponse response = new ErrorResponse();
-        response.setStatus(BAD_REQUEST);
-        response.setMessage("Please ensure that you have write the correct email");
-        return buildResponseEntity(response);
-    }
-
-
-    /**
      * Handles UserNotFoundException and returns a ResponseEntity with an ErrorResponse containing the error message.
      *
      * @param exception the UserNotFoundException to be handled
@@ -132,7 +118,6 @@ public class RestExceptionHandler {
      *
      * @return a ResponseEntity with an ErrorResponse containing the error message
      */
-    // TODO: 16/2/2023 : 403 error handler not working.
     @ExceptionHandler(AccessDeniedException.class)
     protected ResponseEntity<Object> handleAccessDeniedException() {
         ErrorResponse response = new ErrorResponse();
@@ -148,7 +133,7 @@ public class RestExceptionHandler {
      * @return a ResponseEntity with an ErrorResponse containing the error message
      */
     @ExceptionHandler(ExpiredJwtException.class)
-    protected ResponseEntity<Object> handleExpiredJwtException() {
+    public ResponseEntity<Object> handleExpiredJwtException() {
         ErrorResponse response = new ErrorResponse();
         response.setStatus(REQUEST_TIMEOUT);
         response.setMessage("Your session has expired, please login again");
