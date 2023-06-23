@@ -1,5 +1,5 @@
 <script setup>
-import {ref} from 'vue';
+import {ref, onMounted, onUnmounted} from 'vue';
 import axiosInstance from '@/api/axiosInstance';
 import {useAuthStore} from '@/stores';
 import {useRouter} from 'vue-router';
@@ -12,6 +12,26 @@ const errorMessage = ref('');
 const sessionExpired = ref(false);
 const authStore = useAuthStore();
 const router = useRouter();
+
+const handleLocalStorage = () => {
+  if ( // Check if the tokens are present in local storage
+      localStorage.getItem('access_token') &&
+      localStorage.getItem('refresh_token')
+  ) {
+    // Tokens are present, update authentication state
+    const accessToken = localStorage.getItem('access_token');
+    const userRole = extractUserRoleFromToken(accessToken);
+    authStore.login(userRole);
+  }
+};
+
+onMounted(() => {
+  window.addEventListener('storage', handleLocalStorage);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('storage', handleLocalStorage);
+});
 
 async function login() {
   try {
@@ -36,12 +56,14 @@ async function login() {
     // update the authorization header
     axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
 
-    // decode the token and get the user role
-    const decodedToken = JSON.parse(atob(accessToken.split('.')[1]));
-    const userRole = decodedToken.role;
+    // extract the user role from the token
+    const userRole = extractUserRoleFromToken(accessToken);
 
     // call the stores login method this will update the stores state
     authStore.login(userRole);
+
+    // Trigger localStorage event
+    window.dispatchEvent(new Event('localStorage'));
 
     // redirect to the home page
     await router.push('/');
@@ -52,7 +74,7 @@ async function login() {
       showErrorMessage(error.response.data.message);
     } else if (error.request) {
       // The request was made but no response was received.
-      // for example a CORS error
+      // For example, a CORS error
       showErrorMessage('Unable to connect to the server. Please try again later.');
     } else {
       // Something else went wrong
@@ -61,17 +83,22 @@ async function login() {
   }
 }
 
-const clearMessages = () => {
+function clearMessages() {
   errorMessage.value = '';
   sessionExpired.value = false;
-};
+}
 
-const showErrorMessage = (message) => {
+function showErrorMessage(message) {
   errorMessage.value = message;
-};
+}
+
+function extractUserRoleFromToken(token) {
+  const decodedToken = JSON.parse(atob(token.split('.')[1]));
+  return decodedToken.role;
+}
 
 // Check if the route query parameter "sessionExpired" is present
-// if it is set the sessionExpired flag to true, showing the session expired message
+// If it is, set the sessionExpired flag to true, showing the session expired message
 if (router.currentRoute.value.query.sessionExpired) {
   sessionExpired.value = true;
 }

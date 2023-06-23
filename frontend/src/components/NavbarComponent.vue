@@ -1,44 +1,55 @@
-<script>
+<script setup>
 import axiosInstance from "@/api/axiosInstance";
 import router from "@/router";
 import {useAuthStore} from "@/stores";
-import {computed} from 'vue';
+import {computed, onMounted, onUnmounted} from 'vue';
 
-export default {
-  name: "NavbarComponent",
-  setup() {
-    const authStore = useAuthStore();
+// Get the auth store instance
+const authStore = useAuthStore();
 
-    // Use computed properties to automatically update when the store's state changes
-    const isAuthenticated = computed(() => authStore.isUserAuthenticated);
-    const isAdmin = computed(() => authStore.isAdmin);
-    const isUser = computed(() => authStore.isUser);
+// Use computed properties to automatically update when the store's state changes
+const isAuthenticated = computed(() => authStore.isUserAuthenticated);
+const isAdmin = computed(() => authStore.isAdmin);
+const isUser = computed(() => authStore.isUser);
 
-    const logout = async () => {
-      try {
-        // make a logout request to the server
-        await axiosInstance.post('auth/logout');
+// Handle localStorage event
+const handleLocalStorage = () => {
+  if (!localStorage.getItem('access_token') &&
+      !localStorage.getItem('refresh_token')) {
+    // Tokens are removed, update authentication state
+    authStore.logout();
+  }
+};
 
-        // remove the token from local storage
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
+// Register the event listener when the component is mounted
+onMounted(() => {
+  window.addEventListener('storage', handleLocalStorage);
+})
 
-        // reset the default store state
-        authStore.logout();
+// Remove the event listener when the component is unmounted
+onUnmounted(() => {
+  window.removeEventListener('storage', handleLocalStorage);
+});
 
-        // redirect to the login page
-        await router.push('/login');
-      } catch (error) {
-        console.error(error);
-      }
-    };
+const logout = async () => {
+  try {
+    // make a logout request to the server
+    await axiosInstance.post('auth/logout');
 
-    return {
-      isAuthenticated,
-      isAdmin,
-      isUser,
-      logout
-    };
+    // remove the token from local storage
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+
+    // reset the default store state
+    authStore.logout();
+
+    // Trigger localStorage event
+    window.dispatchEvent(new Event('localStorage'));
+
+    // redirect to the login page
+    await router.push('/login');
+  } catch (error) {
+    console.error(error);
   }
 };
 </script>
@@ -47,7 +58,8 @@ export default {
 <template>
   <!-- Start: Navbar Centered Links -->
   <nav class="navbar navbar-light navbar-expand-md fixed-top navbar-shrink py-3" id="mainNav">
-    <div class="container"><a class="navbar-brand d-flex align-items-center" href="/"><span>Brand</span></a>
+    <div class="container">
+      <router-link class="navbar-brand d-flex align-items-center" to="/"><span>Brand</span></router-link>
       <button data-bs-toggle="collapse" class="navbar-toggler" data-bs-target="#navcol-1"><span class="visually-hidden">Toggle navigation</span><span
           class="navbar-toggler-icon"></span></button>
       <div class="collapse navbar-collapse" id="navcol-1">
