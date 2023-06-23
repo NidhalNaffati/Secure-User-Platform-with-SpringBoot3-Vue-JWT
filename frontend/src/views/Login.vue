@@ -1,5 +1,5 @@
 <script setup>
-import {ref, onMounted, onUnmounted} from 'vue';
+import {ref} from 'vue';
 import axiosInstance from '@/api/axiosInstance';
 import {useAuthStore} from '@/stores';
 import {useRouter} from 'vue-router';
@@ -12,26 +12,6 @@ const errorMessage = ref('');
 const sessionExpired = ref(false);
 const authStore = useAuthStore();
 const router = useRouter();
-
-const handleLocalStorage = () => {
-  if ( // Check if the tokens are present in local storage
-      localStorage.getItem('access_token') &&
-      localStorage.getItem('refresh_token')
-  ) {
-    // Tokens are present, update authentication state
-    const accessToken = localStorage.getItem('access_token');
-    const userRole = extractUserRoleFromToken(accessToken);
-    authStore.login(userRole);
-  }
-};
-
-onMounted(() => {
-  window.addEventListener('storage', handleLocalStorage);
-});
-
-onUnmounted(() => {
-  window.removeEventListener('storage', handleLocalStorage);
-});
 
 async function login() {
   try {
@@ -61,9 +41,6 @@ async function login() {
 
     // call the stores login method this will update the stores state
     authStore.login(userRole);
-
-    // Trigger localStorage event
-    window.dispatchEvent(new Event('localStorage'));
 
     // redirect to the home page
     await router.push('/');
