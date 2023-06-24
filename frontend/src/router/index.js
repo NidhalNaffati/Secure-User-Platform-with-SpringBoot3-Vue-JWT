@@ -6,6 +6,7 @@ import NotFoundView from "../views/NotFoundView.vue";
 import ForgottenPasswordView from "@/views/ForgottenPasswordView.vue";
 import AdminPage from "@/views/AdminPage.vue";
 import {useAuthStore} from "@/stores";
+import UserPage from "@/views/UserPage.vue";
 
 const router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),
@@ -40,6 +41,12 @@ const router = createRouter({
             beforeEnter: adminGuard,
         },
         {
+            path: "/user",
+            name: "userPage",
+            component: UserPage,
+            beforeEnter: userGuard,
+        },
+        {
             path: "/404",
             name: "not-found",
             component: NotFoundView,
@@ -57,6 +64,7 @@ const router = createRouter({
 function redirectIfAuthenticated(to, from, next) {
     const authStore = useAuthStore();
     if (authStore.isUserAuthenticated) { // If the user is already authenticated
+        console.warn("You are already authenticated.")
         next({name: "home"}); // Redirect to home page
     } else { // Otherwise
         next(); // Proceed to the requested page
@@ -64,18 +72,70 @@ function redirectIfAuthenticated(to, from, next) {
 }
 
 function adminGuard(to, from, next) {
+    // create store instance
     const authStore = useAuthStore();
-    if (authStore.isUserAuthenticated && authStore.isAdmin) {
+
+    const isUserAuthenticated = authStore.isUserAuthenticated;
+    console.warn('authStore.isUserAuthenticated : ', authStore.isUserAuthenticated)
+    const isAdmin = authStore.isAdmin;
+    console.warn('authStore.isAdmin : ', authStore.isAdmin)
+
+    // If the user is authenticated and is an admin
+    const isUserAuthenticatedAndAuthorized = isUserAuthenticated && isAdmin;
+    const isUserAuthenticatedAndNotAuthorized = isUserAuthenticated && !isAdmin;
+
+    if (!isUserAuthenticated) {
+        console.warn("You are not authenticated.")
+        // redirect to login page
+        next({name: "login"});
+    }
+    if (isUserAuthenticatedAndAuthorized)
+        // Proceed to the requested page
         next();
-    } else {
-        next({ name: "home" }); // Redirect to home page
-        console.error("You are not authorized to access this page.");
+    if (isUserAuthenticatedAndNotAuthorized) {
+        // Redirect to home page
+        next({name: "home"});
+        console.warn("You are not authorized to access this page.")
         /*
         * TODO : add a message to the user to tell him that he is not authorized to access this page.
         *  WE CAN USE THE TOAST COMPONENT FOR THIS
-        * 
+        *
         * */
     }
 }
+
+function userGuard(to, from, next) {
+    // create store instance
+    const authStore = useAuthStore();
+
+    const isUserAuthenticated = authStore.isUserAuthenticated;
+    console.warn('authStore.isUserAuthenticated : ', authStore.isUserAuthenticated)
+    const isUser = authStore.isUser;
+    console.warn('authStore.isUser : ', authStore.isUser)
+
+    // If the user is authenticated and is an admin
+    const isUserAuthenticatedAndAuthorized = isUserAuthenticated && isUser;
+    const isUserAuthenticatedAndNotAuthorized = isUserAuthenticated && !isUser;
+
+    if (!isUserAuthenticated) {
+        console.warn("You are not authenticated.")
+        // redirect to login page
+        next({name: "login"});
+    }
+    if (isUserAuthenticatedAndAuthorized)
+        // Proceed to the requested page
+        next();
+    if (isUserAuthenticatedAndNotAuthorized) {
+        // Redirect to home page
+        next({name: "home"});
+        console.warn("You are not authorized to access this page.")
+        /*
+        * TODO : add a message to the user to tell him that he is not authorized to access this page.
+        *  WE CAN USE THE TOAST COMPONENT FOR THIS
+        *
+        * */
+    }
+}
+
 
 export default router

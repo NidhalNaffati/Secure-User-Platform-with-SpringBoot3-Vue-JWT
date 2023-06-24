@@ -1,17 +1,16 @@
 <script setup>
-import {ref, onMounted} from 'vue';
-import axiosInstance from '@/api/axiosInstance';
+import {onMounted, ref} from "vue";
+import axiosInstance from "@/api/axiosInstance";
 
 const message = ref('');
-
-const getMessage = async () => {
+onMounted(getMessage);
+async function getMessage() {
   try {
-    const response = await axiosInstance.get('/admin');
-    console.info(response)
+    const response = await axiosInstance.get('/user');
     if (response.status === 200) {
       message.value = response.data
-      console.info(response.data)
     }
+
   } catch (e) {
     if (e.response) {
       if (e.response.status === 403) {
@@ -26,16 +25,14 @@ const getMessage = async () => {
       message.value = 'An error occurred while processing your request.';
     }
   }
-};
-
-onMounted(getMessage);
+}
 </script>
 
 <template>
   <section class="py-5 mt-5">
     <div class="container">
       <h1 class="display-4 fw-bold mb-5">
-        <span class="underline">Admin</span> Page
+        <span class="underline">User</span> Page
       </h1>
       <div>
         <h2>{{ message }}</h2>
@@ -43,3 +40,7 @@ onMounted(getMessage);
     </div>
   </section>
 </template>
+
+<style scoped>
+
+</style>

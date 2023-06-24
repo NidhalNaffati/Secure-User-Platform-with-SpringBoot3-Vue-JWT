@@ -79,7 +79,7 @@ const logout = async () => {
             <router-link class="nav-link" to="/admin">ADMIN</router-link>
           </li>
           <li v-if="isUser" class="nav-item">
-            <router-link class="nav-link" to="/recording">USER</router-link>
+            <router-link class="nav-link" to="/user">USER</router-link>
           </li>
         </ul>
         <router-link v-if="!isAuthenticated" class="btn btn-outline-primary" to="/login">Log in</router-link>

@@ -7,11 +7,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("api/v1")
-public class AdminController {
+public class UserController {
 
-    @GetMapping("/admin")
-    public ResponseEntity<String> adminGreeting() {
-        return ResponseEntity.ok("Hello admin u are reading this message from a protected endpoint.");
+    @GetMapping("/user")
+    public ResponseEntity<String> userGreeting() {
+        return ResponseEntity.ok("Hello user u are reading this message from a protected endpoint.");
     }
 
 }

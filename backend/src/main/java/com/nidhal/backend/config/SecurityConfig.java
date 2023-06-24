@@ -66,6 +66,7 @@ public class SecurityConfig {
                                 .accessDeniedHandler((request, response, accessDeniedException) -> {
                                     response.setStatus(SC_FORBIDDEN);
                                     response.getWriter().write("access denied");
+                                    log.error("Access denied error handler triggered");
                                 })
                 )
 
