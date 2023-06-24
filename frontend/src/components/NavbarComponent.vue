@@ -12,23 +12,34 @@ const isAuthenticated = computed(() => authStore.isUserAuthenticated);
 const isAdmin = computed(() => authStore.isAdmin);
 const isUser = computed(() => authStore.isUser);
 
-// Handle localStorage event
-const handleLocalStorage = () => {
+// Function to check if the user is authenticated and update the store state
+function checkAuthenticationStateAndUpdateStore() {
+  // Check if the tokens are removed from localStorage
   if (!localStorage.getItem('access_token') &&
       !localStorage.getItem('refresh_token')) {
-    // Tokens are removed, update authentication state
+    // if tokens are removed, that means the user is logged out
+    // call the stores logout method this will update the stores state
     authStore.logout();
   }
-};
+  // Check if the user is authenticated
+  else if (!authStore.isUserAuthenticated) {
+    // if user is authenticated, that means the user is logged in successfully
+    // get the access token from localStorage
+    const accessToken = localStorage.getItem('access_token');
+    // extract the user role from the token
+    const decodedToken = JSON.parse(atob(accessToken.split('.')[1]));
+    const userRole = decodedToken.role;
+    // call the stores login method this will update the stores state
+    authStore.login(userRole);
+  }
+}
 
-// Register the event listener when the component is mounted
 onMounted(() => {
-  window.addEventListener('storage', handleLocalStorage);
-})
+  window.addEventListener('storage', checkAuthenticationStateAndUpdateStore);
+});
 
-// Remove the event listener when the component is unmounted
 onUnmounted(() => {
-  window.removeEventListener('storage', handleLocalStorage);
+  window.removeEventListener('storage', checkAuthenticationStateAndUpdateStore);
 });
 
 const logout = async () => {
