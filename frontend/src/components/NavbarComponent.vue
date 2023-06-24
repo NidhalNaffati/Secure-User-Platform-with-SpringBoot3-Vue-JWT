@@ -2,7 +2,7 @@
 import axiosInstance from "@/api/axiosInstance";
 import router from "@/router";
 import {useAuthStore} from "@/stores";
-import {computed, onMounted} from 'vue';
+import {computed, onMounted, onUnmounted} from 'vue';
 
 // Get the auth store instance
 const authStore = useAuthStore();
@@ -12,29 +12,23 @@ const isAuthenticated = computed(() => authStore.isUserAuthenticated);
 const isAdmin = computed(() => authStore.isAdmin);
 const isUser = computed(() => authStore.isUser);
 
-// Function to check if the user is authenticated and update the store state
-const checkAuthenticationStateAndUpdateStore = () => {
-  // Check if the tokens are removed from localStorage
+// Handle localStorage event
+const handleLocalStorage = () => {
   if (!localStorage.getItem('access_token') &&
       !localStorage.getItem('refresh_token')) {
-    // if tokens are removed, that means the user is logged out
+    // Tokens are removed, update authentication state
     authStore.logout();
-  }
-  // Check if the user is authenticated
-  if (!authStore.isUserAuthenticated) {
-    // if user is authenticated, that means the user is logged in
-    // get the access token from localStorage
-    const accessToken = localStorage.getItem('access_token');
-    // extract the user role from the token
-    const decodedToken = JSON.parse(atob(accessToken.split('.')[1]));
-    const userRole = decodedToken.role;
-    authStore.login(userRole);
   }
 };
 
 // Register the event listener when the component is mounted
 onMounted(() => {
-  checkAuthenticationStateAndUpdateStore();
+  window.addEventListener('storage', handleLocalStorage);
+})
+
+// Remove the event listener when the component is unmounted
+onUnmounted(() => {
+  window.removeEventListener('storage', handleLocalStorage);
 });
 
 const logout = async () => {
@@ -48,6 +42,9 @@ const logout = async () => {
 
     // reset the default store state
     authStore.logout();
+
+    // Trigger localStorage event
+    window.dispatchEvent(new Event('localStorage'));
 
     // redirect to the login page
     await router.push('/login');
