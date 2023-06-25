@@ -20,6 +20,7 @@ function checkAuthenticationStateAndUpdateStore() {
     // if tokens are removed, that means the user is logged out
     // call the stores logout method this will update the stores state
     authStore.logout();
+    router.push('/login');
   }
   // Check if the user is authenticated
   else if (!authStore.isUserAuthenticated) {
@@ -31,6 +32,12 @@ function checkAuthenticationStateAndUpdateStore() {
     const userRole = decodedToken.role;
     // call the stores login method this will update the stores state
     authStore.login(userRole);
+
+    // update the authorization header
+    axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
+
+    // redirect the user to the home page
+    router.push('/');
   }
 }
 
