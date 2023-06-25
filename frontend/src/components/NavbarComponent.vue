@@ -20,7 +20,6 @@ function checkAuthenticationStateAndUpdateStore() {
     // if tokens are removed, that means the user is logged out
     // call the stores logout method this will update the stores state
     authStore.logout();
-    router.push('/login');
   }
   // Check if the user is authenticated
   else if (!authStore.isUserAuthenticated) {
