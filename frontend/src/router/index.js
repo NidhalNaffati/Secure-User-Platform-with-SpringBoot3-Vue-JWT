@@ -7,6 +7,7 @@ import ForgottenPasswordView from "@/views/ForgottenPasswordView.vue";
 import AdminPage from "@/views/AdminPage.vue";
 import {useAuthStore} from "@/stores";
 import UserPage from "@/views/UserPage.vue";
+import ResetPasswordPage from "@/views/ResetPasswordPage.vue";
 
 const router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),
@@ -32,6 +33,12 @@ const router = createRouter({
             path: "/forgotten-password",
             name: "forgotten-password",
             component: ForgottenPasswordView,
+            beforeEnter: redirectIfAuthenticated,
+        },
+        {
+            path: "/reset-password",
+            name: "reset-password",
+            component: ResetPasswordPage,
             beforeEnter: redirectIfAuthenticated,
         },
         {

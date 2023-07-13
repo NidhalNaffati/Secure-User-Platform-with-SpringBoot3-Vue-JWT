@@ -8,6 +8,7 @@ import com.nidhal.backend.model.EmailRequest;
 import com.nidhal.backend.requests.AuthenticationRequest;
 import com.nidhal.backend.requests.AuthenticationResponse;
 import com.nidhal.backend.requests.RegisterRequest;
+import com.nidhal.backend.requests.UpdatePasswordRequest;
 import com.nidhal.backend.service.AuthenticationService;
 import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -85,7 +86,7 @@ public class AuthenticationController {
         return ResponseEntity.ok(responseToken);
     }
 
-    @PostMapping("reset-password")
+    @PostMapping("forgot-password")
     public ResponseEntity<String> sendResetPasswordRequest(
             @Valid @RequestBody EmailRequest request
     ) {
@@ -104,18 +105,16 @@ public class AuthenticationController {
         }
     }
 
-    @PostMapping("reset-password/{token}")
+    @PostMapping("reset-password")
     public ResponseEntity<String> resetPassword(
-            @PathVariable String token,
-            @RequestParam String password,
-            @RequestParam String passwordConfirm
+            @RequestBody @Valid UpdatePasswordRequest request
     ) {
         try {
-            authenticationService.upDatePassword(token, password, passwordConfirm);
+            authenticationService.upDatePassword(request.token(), request.password(), request.passwordConfirm());
             // If the upDatePassword method succeeds, perform the redirect
-            return ResponseEntity.status(HttpStatus.FOUND)
-                    .header("Location", "http://localhost:5173/login")
-                    .body(null);
+            return ResponseEntity
+                    .status(HttpStatus.OK)
+                    .body("Password updated successfully");
         } catch (PasswordDontMatchException e) { // PasswordDontMatchException is a custom exception
             return ResponseEntity
                     .status(HttpStatus.BAD_REQUEST)

@@ -80,7 +80,8 @@ public class SecurityConfig {
                                         "/api/v1/auth/refresh-token",
                                         "/api/v1/auth/enable-user/**",
                                         "/api/v1/auth/authenticate",
-                                        "/api/v1/auth/reset-password/**")
+                                        "/api/v1/auth/forgot-password",
+                                        "/api/v1/auth/reset-password")
                                 .permitAll()
 
 
@@ -139,9 +140,7 @@ public class SecurityConfig {
         final CorsConfiguration corsConfiguration = new CorsConfiguration();
 
 
-        corsConfiguration.setAllowedOriginPatterns(
-                List.of("*")
-        );
+        corsConfiguration.setAllowedOrigins(List.of("http://localhost:5173"));
 
         corsConfiguration.setAllowedMethods(
                 List.of(

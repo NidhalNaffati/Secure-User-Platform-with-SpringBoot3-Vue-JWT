@@ -12,7 +12,7 @@ const sendEmail = async () => {
     clearMessages();
     // send the reset request to the server
     const response = await axiosInstance.post(
-        'auth/reset-password',
+        'auth/forgot-password',
         {email: email.value},
         {withCredentials: false}
     );

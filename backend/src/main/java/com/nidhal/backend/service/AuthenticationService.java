@@ -135,7 +135,7 @@ public class AuthenticationService {
      * containing a link to reset their password.
      *
      * @param email Email address of the user.
-     * @return JWT token.
+     *
      */
     public void sendResetPasswordRequestToUser(String email) {
         // If an account with the given email already exists, throws an exception
@@ -143,8 +143,8 @@ public class AuthenticationService {
 
         var jwtToken = jwtService.generateTokenForResetPassword(user.getEmail());
 
-        // create the link for the account activation
-        String resetPasswordLink = "http://localhost:9090/api/v1/auth/reset-password/" + jwtToken;
+        // create the link for the account activation & set the token as a param
+        String resetPasswordLink = "http://localhost:5173/reset-password?token=" + jwtToken;
 
         // Send activation link.
         try {
