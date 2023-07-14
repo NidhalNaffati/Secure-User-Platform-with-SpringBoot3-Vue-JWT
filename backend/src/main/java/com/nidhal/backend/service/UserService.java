@@ -2,11 +2,10 @@ package com.nidhal.backend.service;
 
 
 import com.nidhal.backend.entity.User;
-import com.nidhal.backend.model.UserDetailsImpl;
 import com.nidhal.backend.exception.EmailAlreadyExistsException;
 import com.nidhal.backend.exception.PasswordDontMatchException;
 import com.nidhal.backend.exception.UserNotFoundException;
-import com.nidhal.backend.repository.TokenRepository;
+import com.nidhal.backend.model.UserDetailsImpl;
 import com.nidhal.backend.repository.UserRepository;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,19 +14,16 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 /**
  * The UserService class handles business logic related to user accounts, such as saving and retrieving users,
  * updating passwords, and validating user credentials.
  */
 @Service
-@AllArgsConstructor @Slf4j
+@AllArgsConstructor
+@Slf4j
 public class UserService implements UserDetailsService {
     private final UserRepository userRepository;
-    private final TokenRepository tokenRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Override
@@ -37,20 +33,6 @@ public class UserService implements UserDetailsService {
                 .findByEmail(username) // find the user by email
                 .orElseThrow(() -> new UsernameNotFoundException("user not found")); // if the user is not found, throw an exception
         return new UserDetailsImpl(user);
-    }
-
-
-    /**
-     * Deletes all users from the database who have not yet activated their accounts.
-     */
-    @Transactional
-    public void deleteUnactivatedUsers() {
-        List<User> inactiveUsers = userRepository.findAllByEnabledIsFalse();
-        for (User user : inactiveUsers) {
-            tokenRepository.deleteAllByUserId(user.getId());
-            log.info("deleting user: " + user.getEmail());
-            userRepository.delete(user);
-        }
     }
 
     /**

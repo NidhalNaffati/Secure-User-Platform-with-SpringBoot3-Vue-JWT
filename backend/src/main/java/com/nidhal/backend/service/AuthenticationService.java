@@ -4,7 +4,6 @@ package com.nidhal.backend.service;
 import com.nidhal.backend.entity.User;
 import com.nidhal.backend.exception.EmailAlreadyExistsException;
 import com.nidhal.backend.exception.PasswordDontMatchException;
-import com.nidhal.backend.exception.UserNotFoundException;
 import com.nidhal.backend.requests.AuthenticationRequest;
 import com.nidhal.backend.requests.AuthenticationResponse;
 import com.nidhal.backend.requests.RegisterRequest;
@@ -135,7 +134,6 @@ public class AuthenticationService {
      * containing a link to reset their password.
      *
      * @param email Email address of the user.
-     *
      */
     public void sendResetPasswordRequestToUser(String email) {
         // If an account with the given email already exists, throws an exception
@@ -150,9 +148,6 @@ public class AuthenticationService {
         try {
             log.info("Sending reset password link to user with email {}", email);
             emailService.sendResetPasswordRequestToUser(email, user.getFirstName(), resetPasswordLink);
-        } catch (UserNotFoundException e) {
-            log.error("User with email {} not found", email);
-            throw new UserNotFoundException(email);
         } catch (Exception e) {
             log.error("Error while sending reset password link to user with email {}", email);
             throw new MailSendException("Error while sending reset password link to user with email :" + email);
@@ -190,7 +185,7 @@ public class AuthenticationService {
     }
 
 
-    private boolean isPasswordAndPasswordConfirmMatches(RegisterRequest registerRequest) {
+    public boolean isPasswordAndPasswordConfirmMatches(RegisterRequest registerRequest) {
         // checks if the password and password confirm are the same
         return registerRequest.password().equals(registerRequest.confirmPassword());
     }

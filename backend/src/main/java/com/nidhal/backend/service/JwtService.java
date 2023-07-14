@@ -73,7 +73,7 @@ public class JwtService {
      * @param token the JWT token to extract the expiration date from
      * @return the expiration date, or null if the token is invalid
      */
-    private Date extractExpiration(String token) {
+    public Date extractExpiration(String token) {
         return extractClaim(token, Claims::getExpiration);
     }
 
@@ -148,7 +148,7 @@ public class JwtService {
      * @param token the JWT token to check
      * @return true if the token is expired, false otherwise
      */
-    private boolean isTokenExpired(String token) {
+    public boolean isTokenExpired(String token) {
         return extractExpiration(token).before(new Date());
     }
 
@@ -159,7 +159,7 @@ public class JwtService {
      * @param token the JWT token to extract the claims from
      * @return a {@link Claims} object representing the extracted claims
      */
-    private Claims extractAllClaims(String token) {
+    public Claims extractAllClaims(String token) {
         return Jwts
                 .parserBuilder()
                 .setSigningKey(getSignInKey())
@@ -173,7 +173,7 @@ public class JwtService {
      *
      * @return a {@link Key} object representing the signing key
      */
-    private Key getSignInKey() {
+    public Key getSignInKey() {
         byte[] keyBytes = Decoders.BASE64.decode(SECRET_KEY);
         return Keys.hmacShaKeyFor(keyBytes);
     }
