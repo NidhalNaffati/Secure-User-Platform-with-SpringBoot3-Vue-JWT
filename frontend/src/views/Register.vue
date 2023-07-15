@@ -12,16 +12,21 @@ const registerRequest = ref({
   role: 'ROLE_USER',
   confirmPassword: '',
 });
+
+const isLoading = ref(false);
+
 const errorsArray = ref([]);
 const errorMessage = ref('');
 
 const submit = async () => {
   try {
     clearErrors();
+    isLoading.value = true; // Enable loading indicator and disable button
     const response = await axiosInstance.post('auth/register', registerRequest.value);
     if (response.status === 201)
       await router.push('/login');
   } catch (error) {
+    isLoading.value = false; // Disable loading indicator and enable button
     if (error.response) {
       // An error response was received from the server
       if (error.response.status === 422)
@@ -131,7 +136,11 @@ const clearErrors = () => {
                      placeholder="Repeat Password">
             </div>
             <div class="mb-5">
-              <button class="btn btn-primary shadow" type="submit">Create account</button>
+              <button class="btn btn-primary shadow" type="submit" :disabled="isLoading">
+                <span v-if="isLoading" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                {{ isLoading ? 'Creating account...' : 'Create account' }}
+              </button>
+
             </div>
 
             <div v-if="errorMessage" class="alert alert-danger">{{ errorMessage }}</div>

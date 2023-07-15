@@ -5,11 +5,14 @@ import axiosInstance from '@/api/axiosInstance';
 const email = ref('');
 const errorMessage = ref('');
 const successMessage = ref('');
+const isLoading = ref(false);
 
 const sendEmail = async () => {
   try {
     // clear the success & error messages
     clearMessages();
+    // Enable loading indicator and disable button
+    isLoading.value = true;
     // send the reset request to the server
     const response = await axiosInstance.post(
         'auth/forgot-password',
@@ -18,6 +21,7 @@ const sendEmail = async () => {
     );
     // check the response status
     if (response.status === 200) {
+      isLoading.value = false;
       showSuccessMessage('Check your email for a reset link.');
     } else {
       // if the response status is not 200 or 400
@@ -25,6 +29,9 @@ const sendEmail = async () => {
       showErrorMessage(response.data.message);
     }
   } catch (e) {
+    // Disable loading indicator and enable button
+    isLoading.value = false;
+
     if (e.response) {
       // if the response status is 404 then show a success message
       if (e.response.status === 404) {
@@ -84,7 +91,10 @@ const showSuccessMessage = (message) => {
                      placeholder="Email">
             </div>
             <div class="mb-5">
-              <button class="btn btn-primary shadow" type="submit">Reset password</button>
+              <button class="btn btn-primary shadow" type="submit" :disabled="isLoading">
+                <span v-if="isLoading" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                {{ isLoading ? 'Sending Email...' : 'Reset password' }}
+              </button>
             </div>
 
             <div v-if="successMessage" class="alert alert-success">
