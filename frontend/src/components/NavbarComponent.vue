@@ -82,6 +82,9 @@ const logout = async () => {
           class="navbar-toggler-icon"></span></button>
       <div class="collapse navbar-collapse" id="navcol-1">
         <ul class="navbar-nav mx-auto">
+          <li v-if="isAuthenticated" class="nav-item">
+            <router-link class="nav-link" to="/authenticated">Authenticated</router-link>
+          </li>
           <li v-if="isAdmin" class="nav-item">
             <router-link class="nav-link" to="/admin">ADMIN</router-link>
           </li>

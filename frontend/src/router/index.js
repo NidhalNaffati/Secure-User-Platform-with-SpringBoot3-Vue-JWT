@@ -8,6 +8,7 @@ import AdminPage from "@/views/AdminPage.vue";
 import {useAuthStore} from "@/stores";
 import UserPage from "@/views/UserPage.vue";
 import ResetPasswordPage from "@/views/ResetPasswordPage.vue";
+import AuthenticatedUserPage from "@/views/AuthenticatedUserPage.vue";
 
 const router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),
@@ -40,6 +41,12 @@ const router = createRouter({
             name: "reset-password",
             component: ResetPasswordPage,
             beforeEnter: redirectIfAuthenticated,
+        },
+        {
+            path: "/authenticated",
+            name: "authenticated",
+            component: AuthenticatedUserPage,
+            beforeEnter: authenticatedGuard,
         },
         {
             path: "/admin",
@@ -76,6 +83,21 @@ function redirectIfAuthenticated(to, from, next) {
     } else { // Otherwise
         next(); // Proceed to the requested page
     }
+}
+
+function authenticatedGuard(to, from, next) {
+    // create store instance
+    const authStore = useAuthStore();
+
+    const isUserAuthenticated = authStore.isUserAuthenticated;
+    if (!isUserAuthenticated) {
+        console.warn("You are not authenticated.")
+        // redirect to login page
+        next({name: "login"});
+    } else
+        // Proceed to the requested page
+        next();
+
 }
 
 function adminGuard(to, from, next) {
