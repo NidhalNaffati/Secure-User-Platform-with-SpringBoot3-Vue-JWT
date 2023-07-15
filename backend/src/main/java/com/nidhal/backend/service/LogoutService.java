@@ -9,9 +9,15 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.logout.LogoutHandler;
 import org.springframework.stereotype.Service;
 
+/**
+ * Service class for logging out users. Uses TokenService to revoke the token used by the user.
+ * <p>
+ * This class implements the LogoutHandler interface from Spring Security.
+ */
+
+@Slf4j
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class LogoutService implements LogoutHandler {
 
     private final TokenService tokenService;

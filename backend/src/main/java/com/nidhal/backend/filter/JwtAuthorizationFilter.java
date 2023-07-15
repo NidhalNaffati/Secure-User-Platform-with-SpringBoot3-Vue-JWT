@@ -29,10 +29,11 @@ import static jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED;
 
 /**
  * This class is a Spring component that extends OncePerRequestFilter, which is a convenient base class for filter
- * implementations. It filters incoming requests and checks for a valid JWT in the Authorization header. If a valid JWT
- * is found, it authenticates the user associated with the token.
+ * implementations. It filters incoming requests and checks for a valid JWT in the Authorization header.
+ * If a valid JWT is found, it authenticates the user associated with the token.
+ * If the token is absent or not valid, the request is rejected.
  * <p>
- * The component has two dependencies injected via its constructor: JwtService and UserService.
+ * The component has three dependencies: JwtService, UserService, and TokenService.
  */
 @Component
 @Slf4j
@@ -55,6 +56,7 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
             "/api/v1/auth/refresh-token",
             "/api/v1/auth/enable-user",
             "/api/v1/auth/authenticate",
+            "/api/v1/auth/forgot-password",
             "/api/v1/auth/reset-password"
     );
 

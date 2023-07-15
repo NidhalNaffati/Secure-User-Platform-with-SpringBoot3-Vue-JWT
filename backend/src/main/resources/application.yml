@@ -3,9 +3,9 @@ server:
 
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/postgres
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
+    url: jdbc:postgresql://${DB_URL} # by default, the database url is localhost:5432/your_database_name
+    username: ${DB_USERNAME} # by default, the username is postgres
+    password: ${DB_PASSWORD} # by default, the password is mysecretpassword
     driver-class-name: org.postgresql.Driver
 
   jpa:
@@ -32,15 +32,19 @@ spring:
           starttls:
             enable: true
 
+# The admin username and password are used to create the admin account when the application starts.
 admin:
   username: ${ADMIN_USERNAME}
   password: ${ADMIN_PASSWORD}
 
+
 jwt:
+  # different expiration time for each token
   expiration:
     access-token: 86400000          # 1 hour
     refresh-token: 604800000       # 7 days
     reset-password: 900000         # 15 minutes
     enable-account: 900000
 
+  # The jwt secret key is used to sign the token.
   secret-key: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970

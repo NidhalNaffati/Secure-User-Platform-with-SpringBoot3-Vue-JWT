@@ -6,27 +6,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("api/v1/home")
+@RequestMapping("api/v1")
 public class HomePage {
 
-    @GetMapping
-    public ResponseEntity<String> sayHello() {
-        return ResponseEntity.ok("Hello from secured endpoint");
-    }
-
-    @GetMapping("/user")
-    public ResponseEntity<String> sayHelloToUSER() {
-        return ResponseEntity.ok("Hello my user");
-    }
-
-    @GetMapping("/doctor")
-    public ResponseEntity<String> sayHelloToROLE_DOCTOR() {
-        return ResponseEntity.ok("Hello my doctor");
-    }
-
-    @GetMapping("/admin")
-    public ResponseEntity<String> sayHelloToROLE_ADMIN() {
-        return ResponseEntity.ok("Hello my admin");
+    @GetMapping("/home")
+    public ResponseEntity<String> homePageGreeting() {
+        return ResponseEntity.ok("Hello u are reading this message from a protected endpoint. You are now authenticated.");
     }
 
 }

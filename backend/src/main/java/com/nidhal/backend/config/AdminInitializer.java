@@ -12,6 +12,11 @@ import org.springframework.stereotype.Component;
 
 import static com.nidhal.backend.model.Role.ROLE_ADMIN;
 
+/**
+ * This class is responsible for creating the admin user if it does not exist.
+ * It implements the ApplicationRunner interface provided by Spring Boot.
+ * The run method will be executed after the application context is loaded.
+ */
 
 @Component
 @Slf4j

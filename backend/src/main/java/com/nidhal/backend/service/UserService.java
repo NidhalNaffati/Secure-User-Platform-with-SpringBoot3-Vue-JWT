@@ -19,13 +19,21 @@ import org.springframework.stereotype.Service;
  * The UserService class handles business logic related to user accounts, such as saving and retrieving users,
  * updating passwords, and validating user credentials.
  */
+@Slf4j
 @Service
 @AllArgsConstructor
-@Slf4j
 public class UserService implements UserDetailsService {
+
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
+    /**
+     * Loads a user from the database by their email address.
+     *
+     * @param username the username identifying the user whose data is required.
+     * @return a UserDetailsImpl object containing the user's data.
+     * @throws UsernameNotFoundException if no user with the specified email address is found.
+     */
     @Override
     public UserDetailsImpl loadUserByUsername(String username) throws UsernameNotFoundException {
         log.info("loading user by username: {}", username);

@@ -42,10 +42,8 @@ public class User {
     @Transient
     private String confirmPassword;
 
-
     @Enumerated(EnumType.STRING)
     private Role role;
-
 
     /**
      * the user by default is not enable, until he activates his account.
@@ -54,7 +52,6 @@ public class User {
     private boolean enabled; // by default is false, until the user activates his account via email verification.
 
     private boolean accountNonLocked; // by default is true, until the user is blocked by the admin.
-
 
     @OneToMany(mappedBy = "user")
     private List<Token> tokens;

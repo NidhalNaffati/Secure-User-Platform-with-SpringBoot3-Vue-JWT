@@ -11,7 +11,7 @@ public class AdminController {
 
     @GetMapping("/admin")
     public ResponseEntity<String> adminGreeting() {
-        return ResponseEntity.ok("Hello admin u are reading this message from a protected endpoint.");
+        return ResponseEntity.ok("Hello admin u are reading this message from a protected endpoint. Only admins can access this endpoint.");
     }
 
 }

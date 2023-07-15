@@ -90,6 +90,12 @@ public class JwtService {
         return claims;
     }
 
+    /**
+     * Generates a JWT token for a given user.
+     * <p>
+     * The token contains the user's username as the subject, the current time as the issued at date
+     */
+
     // this used for the account verification, reset password, etc.
     public String generateToken(String username, long expirationTimeInMs) {
         final Date expirationDate = new Date(System.currentTimeMillis() + expirationTimeInMs);
@@ -102,20 +108,49 @@ public class JwtService {
                 .compact();
     }
 
+    /**
+     * Generates refresh token for a given user.
+     * <p>
+     *
+     * @param username the username to generate the token for
+     * @return the generated refresh token
+     */
 
     public String generateRefreshToken(String username) {
         return generateToken(username, refreshTokenExpirationTimeInMs);
     }
 
+    /**
+     * Generates token for the account activation.
+     * <p>
+     *
+     * @param username the username to generate the token for
+     * @return the generated token
+     */
     public String generateTokenForEnableAccount(String username) {
         return generateToken(username, enableAccountExpirationTimeInMs);
     }
 
+    /**
+     * Generates token for the password reset.
+     * <p>
+     *
+     * @param username the username to generate the token for
+     * @return the generated token
+     */
     public String generateTokenForResetPassword(String username) {
         return generateToken(username, resetPasswordExpirationTimeInMs);
     }
 
-
+    /**
+     * Generate Access Token for a given user.
+     * <p>
+     * The token contains the user's username as the subject, the current time as the issued at date
+     * and the expiration date.
+     *
+     * @param user the user to generate the token for
+     * @return the generated access token
+     */
     public String generateAccessToken(User user) {
         final Date accessTokenExpirationDate = new Date(System.currentTimeMillis() + accessTokenExpirationTimeInMs);
 

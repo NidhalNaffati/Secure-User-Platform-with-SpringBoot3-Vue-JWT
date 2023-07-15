@@ -11,7 +11,7 @@ public class UserController {
 
     @GetMapping("/user")
     public ResponseEntity<String> userGreeting() {
-        return ResponseEntity.ok("Hello user u are reading this message from a protected endpoint.");
+        return ResponseEntity.ok("Hello user u are reading this message from a protected endpoint. Only users can access this endpoint.");
     }
 
 }

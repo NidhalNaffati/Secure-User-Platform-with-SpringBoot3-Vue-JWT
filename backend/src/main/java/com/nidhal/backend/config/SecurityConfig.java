@@ -84,12 +84,6 @@ public class SecurityConfig {
                                         "/api/v1/auth/reset-password")
                                 .permitAll()
 
-
-                                // allow only authenticated doctor to this endpoint
-                                .requestMatchers(HttpMethod.GET,
-                                        "/api/v1/doctor/**")
-                                .hasAuthority("ROLE_DOCTOR")
-
                                 // allow only authenticated user to this endpoint
                                 .requestMatchers(HttpMethod.GET,
                                         "/api/v1/user/**")
@@ -99,7 +93,6 @@ public class SecurityConfig {
                                 .requestMatchers(HttpMethod.GET,
                                         "/api/v1/admin/**")
                                 .hasAuthority("ROLE_ADMIN")
-
 
                                 // any other request must be authenticated
                                 .anyRequest().authenticated()
@@ -140,7 +133,7 @@ public class SecurityConfig {
         final CorsConfiguration corsConfiguration = new CorsConfiguration();
 
 
-        corsConfiguration.setAllowedOrigins(List.of("http://localhost:5173"));
+        corsConfiguration.setAllowedOriginPatterns(List.of("*"));
 
         corsConfiguration.setAllowedMethods(
                 List.of(

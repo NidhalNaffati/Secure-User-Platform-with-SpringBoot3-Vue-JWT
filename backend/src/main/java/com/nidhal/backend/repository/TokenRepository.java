@@ -2,12 +2,18 @@ package com.nidhal.backend.repository;
 
 import com.nidhal.backend.entity.Token;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * This interface represents the repository that will manage the persistence of the token entity.
+ * It extends the JpaRepository interface provided by Spring Data JPA.
+ */
+
+@Repository
 public interface TokenRepository extends JpaRepository<Token, Long> {
 
     @Query(value = """
@@ -18,14 +24,11 @@ public interface TokenRepository extends JpaRepository<Token, Long> {
     List<Token> findAllValidTokenByUser(Long id);
 
 
-
+    @Query("""
+            SELECT t FROM Token t
+            WHERE t.token = :token
+             """)
     Optional<Token> findByToken(String token);
 
-    // create the query that deletes all the tokens of a user
-    @Modifying
-    @Query("DELETE FROM Token t WHERE t.user.id = ?1")
-    void deleteAllByUserId(Long userId);
 
-    @Query("SELECT t FROM Token t WHERE t.revoked = true OR t.expired = true")
-    List<Token> findByRevokedTrueOrExpiredTrue();
 }

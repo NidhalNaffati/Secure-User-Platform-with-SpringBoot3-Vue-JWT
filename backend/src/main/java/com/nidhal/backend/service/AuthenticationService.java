@@ -24,10 +24,15 @@ import java.io.IOException;
 
 import static jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED;
 
+/**
+ * The AuthenticationService class is responsible for user authentication and registration processes.
+ * <p>
+ * It provides methods to authenticate users, register new users, send reset password requests, update passwords, enable user accounts, and refresh authentication tokens.
+ */
 
+@Slf4j
 @Service
 @AllArgsConstructor
-@Slf4j
 public class AuthenticationService {
 
     private final AuthenticationManager authenticationManager;
@@ -35,6 +40,7 @@ public class AuthenticationService {
     private final EmailService emailService;
     private final JwtService jwtService;
     private final TokenService tokenService;
+
 
     /**
      * Authenticates the user and generates a JWT token.
@@ -72,6 +78,7 @@ public class AuthenticationService {
         return new AuthenticationResponse(accessToken, refreshToken);
     }
 
+
     /**
      * Registers a new user with the provided registration details.
      * <p>
@@ -83,7 +90,6 @@ public class AuthenticationService {
      * 5. Generates a JWT token for enabling the user account.
      * 6. Creates an activation link using the generated JWT token.
      * 7. Sends the activation link to the user's email address.
-     * 8. Saves the user token for future authentication.
      *
      * @param registerRequest The registration details of the user.
      *                        It contains information such as email, password, first name, etc.
@@ -91,7 +97,6 @@ public class AuthenticationService {
      * @throws EmailAlreadyExistsException If an account with the provided email already exists.
      * @throws MailSendException           If there is an error while sending the activation link to the user.
      */
-
     public void registerUser(RegisterRequest registerRequest) {
         // If the password and password confirm do not match, throws an exception
         if (!isPasswordAndPasswordConfirmMatches(registerRequest)) {
@@ -121,6 +126,7 @@ public class AuthenticationService {
             emailService.sendActivationLink(registerRequest.email(), registerRequest.firstName(), activationLink);
         } catch (Exception e) {
             log.error("Error while sending activation link to user {}", registerRequest.email());
+            log.info("If u didn't receive the email, due to the fact that we are in dev mode, we can pretend that the following link is sent : {}", activationLink);
             throw new MailSendException(registerRequest.email());
         }
 
@@ -149,7 +155,8 @@ public class AuthenticationService {
             log.info("Sending reset password link to user with email {}", email);
             emailService.sendResetPasswordRequestToUser(email, user.getFirstName(), resetPasswordLink);
         } catch (Exception e) {
-            log.error("Error while sending reset password link to user with email {}", email);
+            log.warn("Error while sending reset password link to user with email {}", email);
+            log.info("If u didn't receive the email, due to the fact that we are in dev mode, we can pretend that the following link is sent : {}", resetPasswordLink);
             throw new MailSendException("Error while sending reset password link to user with email :" + email);
         }
         log.info("Reset password link sent to user with email {}", email);
@@ -185,11 +192,26 @@ public class AuthenticationService {
     }
 
 
+    /**
+     * Checks if the password and password confirmation match.
+     *
+     * @param registerRequest The registration details of the user.
+     * @return True if the password and password confirmation match, false otherwise.
+     */
     public boolean isPasswordAndPasswordConfirmMatches(RegisterRequest registerRequest) {
         // checks if the password and password confirm are the same
         return registerRequest.password().equals(registerRequest.confirmPassword());
     }
 
+
+    /**
+     * Refreshes the JWT token.
+     *
+     * @param request  HTTP request.
+     * @param response HTTP response.
+     * @return The new JWT token.
+     * @throws IOException If an error occurs while writing the response.
+     */
     public AuthenticationResponse refreshToken(HttpServletRequest request, HttpServletResponse response) throws IOException {
         // initialize the result
         AuthenticationResponse result = null;
