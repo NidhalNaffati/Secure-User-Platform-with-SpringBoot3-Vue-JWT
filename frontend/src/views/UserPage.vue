@@ -1,16 +1,15 @@
 <script setup>
-import {onMounted, ref} from "vue";
+import { onMounted, ref } from "vue";
 import axiosInstance from "@/api/axiosInstance";
 
-const message = ref('');
+const message = ref("");
 onMounted(getMessage);
 async function getMessage() {
   try {
-    const response = await axiosInstance.get('/user');
+    const response = await axiosInstance.get("/user");
     if (response.status === 200) {
-      message.value = response.data
+      message.value = response.data;
     }
-
   } catch (e) {
     if (e.response) {
       if (e.response.status === 403) {
@@ -19,10 +18,11 @@ async function getMessage() {
         message.value = e.response.data;
       }
     } else if (e.request) {
-      console.error(e.request)
-      message.value = 'Unable to connect to the server. Please try again later.';
+      console.error(e.request);
+      message.value =
+        "Unable to connect to the server. Please try again later.";
     } else {
-      message.value = 'An error occurred while processing your request.';
+      message.value = "An error occurred while processing your request.";
     }
   }
 }
@@ -41,6 +41,4 @@ async function getMessage() {
   </section>
 </template>
 
-<style scoped>
-
-</style>
+<style scoped></style>
