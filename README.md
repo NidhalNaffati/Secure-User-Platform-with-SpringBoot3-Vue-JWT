@@ -79,8 +79,10 @@ spring:
 5. Run the frontend via your IDE, or using the following command `npm run dev`.
 
 ## _Architecture_
+Global Diagram of the application:
+<img src="./docs/diagram-globale-spring-security-jwt-vue.png">
 
-Diagram of the architecture of the application:
+Diagram of the architecture of the spring security application:
 
 <img alt="architecture" width="1157" height="789" src="./docs/jwt-security-diagram.png"/>
 
