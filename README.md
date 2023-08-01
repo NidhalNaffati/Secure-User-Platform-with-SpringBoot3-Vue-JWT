@@ -28,7 +28,7 @@ application, a mobile app, or any system that requires user management, this pro
 ## _Technologies Used_
 
 Those are the main technologies used in this project:
-<img alt="main tech used" width="1584" height="396" src="./docs/main_tech_used.png"/>
+<img alt="main tech used" src="./docs/main_tech_used.png"/>
 
 The following are in details technologies used to build this application: <br/>
 ✅ Java 17 <br/>
@@ -70,25 +70,27 @@ The following are in details technologies used to build this application: <br/>
   ```yaml
 spring:
   datasource:
-    url: jdbc:postgresql://${DB_URL} # by default, the url is localhost:5432
-    username: ${DB_USERNAME} # by default, the username is postgres
-    password: ${DB_PASSWORD} 
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:postgres}
+    username: ${POSTGRES_USER:postgres}
+    password: ${POSTGRES_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver 
 ```
 
 4. Run the backend via your IDE, or using the Maven plugin `mvn spring-boot:run`.
 5. Run the frontend via your IDE, or using the following command `npm run dev`.
 
 ## _Architecture_
+
 Global Diagram of the application:
 <img src="./docs/diagram-globale-spring-security-jwt-vue.png">
 
 Diagram of the architecture of the spring security application:
 
-<img alt="architecture" width="1157" height="789" src="./docs/jwt-security-diagram.png"/>
+<img alt="architecture" src="./docs/jwt-security-diagram.png"/>
 
 Diagram of class of the application:
 
-<img alt="architecture" width="922" height="518" src="./docs/diagram-class.png"/>
+<img alt="architecture"src="./docs/diagram-class.png"/>
 
 ## _Endpoints_
 
@@ -121,6 +123,36 @@ The following endpoints are available in the API:
 <br/>
 
 ## _Screen Shots_
+
+<div style="width: 75%;">
+This is the landing page of the application. <br/>
+<img src="./docs/screenshots/landing_page.png" alt="landing_page">
+
+This is the login page of the application. <br/>
+<img src="./docs/screenshots/login.png" alt="login">
+
+This is the login page showing an error message. <br/>
+<img src="./docs/screenshots/login_error.png" alt="login_error">
+
+This is the register page of the application. <br/>
+<img src="./docs/screenshots/register.png" alt="register">
+
+This is the Email received by the user, used to activate the account <br/>
+<img src="./docs/screenshots/mail_delivery.png" alt="reset-password">
+
+This is the forgot password page of the application. <br/>
+<img src="./docs/screenshots/forgot-password.png" alt="forgot-password">
+
+This is the authenticated page of the application, all the authenticated users can access this page. <br/>
+<img src="./docs/screenshots/authenticated.png" alt="authenticated-page">
+
+This is the user page of the application, only the authenticated users can access this page. <br/>
+<img src="./docs/screenshots/user.png" alt="user-page">
+
+This is the admin page of the application, only the authenticated users with the role admin can access this page. <br/>
+<img src="./docs/screenshots/admin.png" alt="admin-page">
+
+</div>
 
 ## _Contributing_
 
