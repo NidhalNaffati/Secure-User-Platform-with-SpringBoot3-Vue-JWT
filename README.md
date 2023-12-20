@@ -70,10 +70,13 @@ The following are in details technologies used to build this application: <br/>
   ```yaml
 spring:
   datasource:
-    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:postgres}
-    username: ${POSTGRES_USER:postgres}
-    password: ${POSTGRES_PASSWORD:postgres}
-    driver-class-name: org.postgresql.Driver 
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:postgres} # if the host is not specified, it will be localhost, if the port is not specified, it will be 5432 and if the database is not specified, it will be postgres
+    username: ${POSTGRES_USER:postgres} # if the username is not specified, it will be postgres
+    password: ${POSTGRES_PASSWORD:postgres} # if the password is not specified, it will be postgres
+    redis:
+    host: ${REDIS_HOST:localhost} # if the host is not specified, it will be localhost
+    port: ${REDIS_PORT:6379} # if the port is not specified, it will be 6379
+    time-to-live: 60 # the time to live in seconds
 ```
 
 4. Run the backend via your IDE, or using the Maven plugin `mvn spring-boot:run`.
