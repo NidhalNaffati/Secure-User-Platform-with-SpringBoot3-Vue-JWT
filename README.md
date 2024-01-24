@@ -93,7 +93,7 @@ Diagram of the architecture of the spring security application:
 
 Diagram of class of the application:
 
-<img alt="architecture"src="./docs/diagram-class.png"/>
+<img alt="architecture" src="./docs/diagram-class.png"/>
 
 ## _Endpoints_
 
