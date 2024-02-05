@@ -1,41 +1,23 @@
-version: '3.5'
-
+## This file is used by the docker compose support dependency to start the required services for the project.
 services:
-  postgres:
-    container_name: postgres_container
-    image: postgres
+  # PostgreSQL Database
+  postgres_db:
+    image: postgres:latest
+    container_name: postgres_db
     environment:
+      POSTGRES_DB: ${POSTGRES_DB:-postgres}
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      PGDATA: /data/postgres
-    volumes:
-      - postgres:/data/postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
     ports:
-      - "5432:5432"
-    networks:
-      - postgres
-    restart: unless-stopped
-
-  pgadmin:
-    container_name: pgadmin_container
-    image: dpage/pgadmin4
-    environment:
-      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-pgadmin4@pgadmin.org}
-      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
-      PGADMIN_CONFIG_SERVER_MODE: 'False'
+      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
-      - pgadmin:/var/lib/pgadmin
-
-    ports:
-      - "${PGADMIN_PORT:-5050}:80"
+      - postgres_data:/var/lib/postgresql/data
     networks:
       - postgres
     restart: unless-stopped
 
 networks:
   postgres:
-    driver: bridge
 
 volumes:
-  postgres:
-  pgadmin:
+  postgres_data:
