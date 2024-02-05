@@ -76,7 +76,7 @@
 <body>
 <div class="container">
     <div class="header">
-        <h1>Account Activition</h1>
+        <h1>Account Activation</h1>
     </div>
     <form action="{{activationLink}}" method="POST">
         <p>Hello <span class="user-name">{{firstName}}</span>,</p>
@@ -84,7 +84,7 @@
         <button type="submit" class="btn">Activate Your Account Now</button>
         <input type="hidden" name="activationLink" value="{{activationLink}}"/>
     </form>
-    <p>The activation link will expire in 15 minutes.</p>
+    <p>The activation link will expire in {{expirationTimeInMinutes}} minutes.</p>
     <div class="footer">
         <p>If you did not sign up for our service, please ignore this email.</p>
         <p>&copy; {{currentYear}} Our Group.   All rights reserved.</p>
