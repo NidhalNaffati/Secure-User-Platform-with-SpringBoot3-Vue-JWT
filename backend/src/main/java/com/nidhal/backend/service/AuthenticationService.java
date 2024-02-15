@@ -53,10 +53,10 @@ public class AuthenticationService {
         try {
             // Attempts to authenticate the user with the provided email and password
             authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                    request.email(),
-                    request.password()
-                )
+              new UsernamePasswordAuthenticationToken(
+                request.email(),
+                request.password()
+              )
             );
         } catch (InternalAuthenticationServiceException e) {
             // If the authentication fails, throws an exception with a message indicating invalid credentials
@@ -119,18 +119,19 @@ public class AuthenticationService {
         try {
             log.info("Sending activation link to user {}", registerRequest.email());
             emailService.sendActivationLink(registerRequest.email(), registerRequest.firstName(), activationLink);
+
+            // Creates a new user based on the information in the request and saves it in the database
+            User user = registerRequest.toUser();
+
+            var savedUser = userService.saveUser(user);
+
+            tokenService.saveUserToken(savedUser, jwtToken);
+            log.info("User successfully registered with request {}", registerRequest);
+
         } catch (Exception e) {
-            log.error("Error while sending activation link to user {}", registerRequest.email());
-            log.info("If u didn't receive the email, due to the fact that we are in dev mode, we can pretend that the following link is sent : {}", activationLink);
+            log.error("Cannot create user with request {}", registerRequest);
+            log.error("Error: {}", e.getMessage());
         }
-
-        // Creates a new user based on the information in the request and saves it in the database
-        User user = registerRequest.toUser();
-
-        var savedUser = userService.saveUser(user);
-
-        tokenService.saveUserToken(savedUser, jwtToken);
-        log.info("User successfully registered with request {}", registerRequest);
     }
 
 
