@@ -24,7 +24,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.List;
 
-import static jakarta.servlet.http.HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
 import static jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED;
 
 /**
@@ -51,93 +50,115 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
     private static final String BEARER_PREFIX = "Bearer ";
 
     // The list of public endpoints that do not require authentication
-    private final List<String> PUBLIC_ENDPOINTS = List.of(
-            "/api/v1/auth/register",
-            "/api/v1/auth/refresh-token",
-            "/api/v1/auth/enable-user",
-            "/api/v1/auth/authenticate",
-            "/api/v1/auth/forgot-password",
-            "/api/v1/auth/reset-password"
+    private static final List<String> PUBLIC_ENDPOINTS = List.of(
+        "/api/v1/auth/register",
+        "/api/v1/auth/refresh-token",
+        "/api/v1/auth/enable-user",
+        "/api/v1/auth/authenticate",
+        "/api/v1/auth/forgot-password",
+        "/api/v1/auth/reset-password"
     );
 
     @Override
     protected void doFilterInternal(
-            @NonNull HttpServletRequest request,
-            @NonNull HttpServletResponse response,
-            @NonNull FilterChain filterChain
+        @NonNull HttpServletRequest request,
+        @NonNull HttpServletResponse response,
+        @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
-
-        if (PUBLIC_ENDPOINTS.contains(request.getServletPath())
-        ) {
-            log.info("skipping the filter for the following request url {} : ", request.getServletPath());
+        // Check if the request is for a public endpoint
+        if (isPublicEndpoint(request)) {
+            // If the request is for a public endpoint, skip the filter
+            log.info("Skipping the filter for the following request URL {}", request.getServletPath());
             filterChain.doFilter(request, response);
-        } else {
+            return;
+        }
 
-            final String authHeader = request.getHeader(AUTHORIZATION_HEADER);
-            final String jwt;
-            final String username;
+        // Check if the Authorization header is missing or does not contain a valid JWT
+        String authHeader = request.getHeader(AUTHORIZATION_HEADER);
+        if (authHeader == null || !authHeader.startsWith(BEARER_PREFIX)) {
+            // Handle the case where the Authorization header is missing or does not contain a valid JWT
+            handleMissingToken(response, request);
+            return;
+        }
 
-            // Check if Authorization header is missing or does not contain a valid JWT
-            if (authHeader != null && authHeader.startsWith(BEARER_PREFIX)) {
-                try {
-                    // Extract the JWT from the Authorization header
-                    jwt = authHeader.substring(7);
+        // Extract JWT from the Authorization header
+        String jwt = authHeader.substring(7);
+        // Extract username from the JWT
+        String username = extractUsernameFromJwt(jwt);
 
-                    // Extract the user email from the JWT and check if it is valid
-                    username = jwtService.extractUsername(jwt);
+        // If username is null, it indicates an issue with the JWT.
+        if (username == null) {
+            // If username is null, it indicates an issue with the JWT.
+            handleInvalidToken(response);
+            return;
+        }
+
+        // If the user is already authenticated, no need to process further
+        if (SecurityContextHolder.getContext().getAuthentication() != null) {
+            filterChain.doFilter(request, response);
+            return;
+        }
 
 
-                    if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                        // Retrieve the userDetails from the database
-                        UserDetailsImpl userDetails = userService.loadUserByUsername(username);
+        // Load UserDetails from the database using the extracted username
+        UserDetailsImpl userDetails = userService.loadUserByUsername(username);
 
-                        var isTokenValid = tokenService.isTokenValid(jwt);
-                        // Check if the JWT is valid for the retrieved userDetails
+        // Check if the JWT is valid and if the token is valid
+        if (!isTokenValid(jwt, userDetails)) {
+            // Handle the case where the JWT is not valid
+            handleInvalidToken(response);
+            return;
+        }
 
-                        if (jwtService.isTokenValid(jwt, userDetails) && isTokenValid) {
-                            // create a new authentication token with the retrieved user
-                            UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                                    userDetails,
-                                    null,
-                                    userDetails.getAuthorities()
-                            );
+        // Create a new authentication token with the retrieved user
+        UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+            userDetails,
+            null,
+            userDetails.getAuthorities()
+        );
+        // Set the details of the authentication token
+        authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+        // Set the authentication token in the SecurityContextHolder
+        SecurityContextHolder.getContext().setAuthentication(authToken);
 
-                            // Set the details of the authentication token
-                            authToken.setDetails(
-                                    new WebAuthenticationDetailsSource().buildDetails(request)
-                            );
+        // Proceed with the filter chain
+        filterChain.doFilter(request, response);
+    }
 
-                            // Set the authentication token in the SecurityContextHolder
-                            SecurityContextHolder.getContext().setAuthentication(authToken);
-                        }
-                    }
-                    // Proceed with the filter chain
-                    filterChain.doFilter(request, response);
-                } catch (ExpiredJwtException ex) { // catch the exception if the token has expired
-                    log.warn("JWT has expired: {}", ex.getMessage());
-                    response.setStatus(SC_UNAUTHORIZED);
-                    response.getWriter().write("Access token expired");
-                } catch (MalformedJwtException ex) { // catch the exception if the token is malformed
-                    log.warn("JWT is malformed: {}", ex.getMessage());
-                    response.setStatus(SC_UNAUTHORIZED);
-                    response.getWriter().write("JWT is malformed");
-                } catch (SignatureException ex) { // catch the exception if the token is invalid
-                    log.warn("JWT signature is invalid: {}", ex.getMessage());
-                    response.setStatus(SC_UNAUTHORIZED);
-                    response.getWriter().write("JWT signature is invalid");
-                } catch (UnsupportedJwtException exception) { // catch the exception if the token is unsupported
-                    log.warn("JWT is unsupported: {}", exception.getMessage());
-                    response.setStatus(SC_UNAUTHORIZED);
-                    response.getWriter().write("JWT is unsupported");
-                } catch (Exception ex) { // catch the exception if any other error occurs
-                    log.error("Failed to extract username from JWT: {}", ex.getMessage());
-                    response.sendError(SC_INTERNAL_SERVER_ERROR, "Failed to extract username from JWT");
-                }
-            } else {
-                // Authorization header is missing or does not contain a valid JWT
-                log.error("Authorization header is missing or does not contain a valid JWT for the following URL : {}  ", request.getServletPath());
-                filterChain.doFilter(request, response);
-            }
+    private boolean isPublicEndpoint(HttpServletRequest request) {
+        return PUBLIC_ENDPOINTS.stream().anyMatch(request.getServletPath()::startsWith);
+    }
+
+    private boolean isTokenValid(String jwt, UserDetailsImpl userDetails) {
+        return tokenService.isTokenValid(jwt) && jwtService.isTokenValid(jwt, userDetails);
+    }
+
+    private void handleMissingToken(HttpServletResponse response, HttpServletRequest request) throws IOException {
+        log.error("Authorization header is missing or does not contain a valid JWT for the following URL: {}", request.getServletPath());
+        response.sendError(SC_UNAUTHORIZED, "Authorization header is missing or does not contain a valid JWT");
+    }
+
+    private void handleInvalidToken(HttpServletResponse response) throws IOException {
+        log.warn("JWT is not valid");
+        response.setStatus(SC_UNAUTHORIZED);
+        response.getWriter().write("JWT is not valid");
+    }
+
+    private String extractUsernameFromJwt(String jwt) {
+        try {
+            return jwtService.extractUsername(jwt);
+        } catch (ExpiredJwtException ex) {
+            log.warn("JWT has expired: {}", ex.getMessage());
+            return null;
+        } catch (MalformedJwtException ex) {
+            log.warn("JWT is malformed: {}", ex.getMessage());
+            return null;
+        } catch (SignatureException ex) {
+            log.warn("JWT signature is invalid: {}", ex.getMessage());
+            return null;
+        } catch (UnsupportedJwtException ex) {
+            log.warn("JWT is unsupported: {}", ex.getMessage());
+            return null;
         }
     }
 }
