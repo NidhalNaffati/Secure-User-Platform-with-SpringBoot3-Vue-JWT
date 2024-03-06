@@ -1,7 +1,7 @@
 <script setup>
 import axiosInstance from "@/api/axiosInstance";
 import router from "@/router";
-import { ref } from "vue";
+import {ref} from "vue";
 
 const registerRequest = ref({
   firstName: "",
@@ -17,6 +17,18 @@ const isLoading = ref(false);
 
 const errorsArray = ref([]);
 const errorMessage = ref("");
+
+const validatePassword = () => {
+  // Check password requirements
+  const hasMinLength = registerRequest.value.password.length >= 8;
+  const hasDigit = /\d/.test(registerRequest.value.password);
+  const hasLowerCase = /[a-z]/.test(registerRequest.value.password);
+  const hasUpperCase = /[A-Z]/.test(registerRequest.value.password);
+  const passwordMatch = registerRequest.value.password === registerRequest.value.confirmPassword;
+
+  // Return true if all requirements are met, false otherwise
+  return hasMinLength && hasDigit && hasLowerCase && hasUpperCase && passwordMatch;
+};
 
 const submit = async () => {
   try {
@@ -75,13 +87,13 @@ const clearErrors = () => {
             Have an account?
             <router-link to="/login">
               Log in
-              <img src="src/assets/img/arrow-right.svg" alt="right-arrow" />
+              <img src="src/assets/img/arrow-right.svg" alt="right-arrow"/>
             </router-link>
           </p>
           <p class="text-muted">
             Forgot your password?
             <router-link to="/forgotten-password">
-              Yes <img src="src/assets/img/arrow-right.svg" alt="right-arrow" />
+              Yes <img src="src/assets/img/arrow-right.svg" alt="right-arrow"/>
             </router-link>
           </p>
         </div>
@@ -126,7 +138,7 @@ const clearErrors = () => {
                       checked
                     />
                     <label class="form-check-label" for="user-radio"
-                      >Male</label
+                    >Male</label
                     >
                   </div>
                 </div>
@@ -142,7 +154,7 @@ const clearErrors = () => {
                       v-model="registerRequest.gender"
                     />
                     <label class="form-check-label" for="doctor-radio"
-                      >Female</label
+                    >Female</label
                     >
                   </div>
                 </div>
@@ -178,11 +190,46 @@ const clearErrors = () => {
                 placeholder="Repeat Password"
               />
             </div>
+            <div class="mb-3">
+              <!-- add a list of check points to make sure that password length is 8-->
+              <ul v-if="registerRequest.password.length > 0" class="password-requirements">
+                <li v-if="registerRequest.password.length < 8" class="text-danger">
+                  &#x2718; Password must be at least 8 characters long
+                </li>
+              </ul>
+              <!-- add a list of check points to make sure that password contains digits -->
+              <ul v-if="registerRequest.password.length > 0" class="password-requirements">
+                <li v-if="!/\d/.test(registerRequest.password)" class="text-danger">
+                  &#x2718; Password must contain at least one digit
+                </li>
+              </ul>
+
+              <!-- add a list of check points to make sure that password contains lower case letters -->
+              <ul v-if="registerRequest.password.length > 0" class="password-requirements">
+                <li v-if="!/[a-z]/.test(registerRequest.password)" class="text-danger">
+                  &#x2718; Password must contain at least one lower case letter
+                </li>
+              </ul>
+
+              <!-- add a list of check points to make sure that password contains upper case letters -->
+              <ul v-if="registerRequest.password.length > 0" class="password-requirements">
+                <li v-if="!/[A-Z]/.test(registerRequest.password)" class="text-danger">
+                  &#x2718; Password must contain at least one upper case letter
+                </li>
+              </ul>
+
+              <!-- add a list of check points to make sure that password and password confirm matches -->
+              <ul v-if="registerRequest.password.length > 0" class="password-requirements">
+                <li v-if="registerRequest.password !== registerRequest.confirmPassword" class="text-danger">
+                  &#x2718; Password and confirm password must match
+                </li>
+              </ul>
+            </div>
             <div class="mb-5">
               <button
                 class="btn btn-primary shadow"
                 type="submit"
-                :disabled="isLoading"
+                :disabled="!validatePassword() || isLoading"
               >
                 <span
                   v-if="isLoading"
@@ -211,3 +258,10 @@ const clearErrors = () => {
     </div>
   </section>
 </template>
+
+<style scoped>
+.password-requirements {
+  list-style-type: none;
+  padding-left: 0;
+}
+</style>
