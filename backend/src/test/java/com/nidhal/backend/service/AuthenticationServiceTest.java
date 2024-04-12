@@ -96,15 +96,16 @@ public class AuthenticationServiceTest {
         // given
         AuthenticationRequest request = new AuthenticationRequest("test@example.com", "invalidPassword");
 
-        doThrow(InternalAuthenticationServiceException.class).when(authenticationManager)
-                .authenticate(any());
+        // when
+        when(userService.validateCredentials(request.email(), request.password()))
+                .thenThrow(new BadCredentialsException("Invalid credentials"));
 
-        // when/then
+        // then
         assertThrows(BadCredentialsException.class, () -> underTestAuthenticationService.authenticate(request));
     }
 
     @Test
-    public void registerNewUer_ShouldSuccess() {
+    void registerNewUer_ShouldSuccess() {
         // given
         RegisterRequest registerRequest = USER_REGISTER_REQUEST;
 

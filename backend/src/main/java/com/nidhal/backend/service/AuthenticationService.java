@@ -16,7 +16,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.mail.MailSendException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.InternalAuthenticationServiceException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.stereotype.Service;
 
@@ -50,23 +49,20 @@ public class AuthenticationService {
      * @throws BadCredentialsException if the credentials are invalid
      */
     public AuthenticationResponse authenticate(AuthenticationRequest request) {
-        try {
-            // Attempts to authenticate the user with the provided email and password
-            authenticationManager.authenticate(
-              new UsernamePasswordAuthenticationToken(
-                request.email(),
-                request.password()
-              )
-            );
-        } catch (InternalAuthenticationServiceException e) {
-            // If the authentication fails, throws an exception with a message indicating invalid credentials
-            log.error("error while authenticating user with request {}", request);
-            throw new BadCredentialsException("Invalid credentials");
-        }
 
         // If the authentication is successful, retrieves the user from the database and generates a JWT token
         User user = userService.validateCredentials(request.email(), request.password());
         log.info("User {} successfully authenticated with role {}", user.getFirstName(), user.getRole());
+
+
+        // Attempts to authenticate the user with the provided email and password
+        authenticationManager.authenticate(
+          new UsernamePasswordAuthenticationToken(
+            request.email(),
+            request.password()
+          )
+        );
+
 
         String accessToken = jwtService.generateAccessToken(user);
         String refreshToken = jwtService.generateRefreshToken(user.getEmail());

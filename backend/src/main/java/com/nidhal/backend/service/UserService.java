@@ -2,6 +2,7 @@ package com.nidhal.backend.service;
 
 
 import com.nidhal.backend.entity.User;
+import com.nidhal.backend.exception.AccountLockedException;
 import com.nidhal.backend.exception.EmailAlreadyExistsException;
 import com.nidhal.backend.exception.PasswordDontMatchException;
 import com.nidhal.backend.exception.UserNotFoundException;
@@ -24,6 +25,7 @@ import org.springframework.stereotype.Service;
 @AllArgsConstructor
 public class UserService implements UserDetailsService {
 
+    public static final int MAX_FAILED_ATTEMPTS = 5;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
@@ -38,8 +40,8 @@ public class UserService implements UserDetailsService {
     public UserDetailsImpl loadUserByUsername(String username) throws UsernameNotFoundException {
         log.info("loading user by username: {}", username);
         User user = userRepository
-                .findByEmail(username) // find the user by email
-                .orElseThrow(() -> new UsernameNotFoundException("user not found")); // if the user is not found, throw an exception
+          .findByEmail(username) // find the user by email
+          .orElseThrow(() -> new UsernameNotFoundException("user not found")); // if the user is not found, throw an exception
         return new UserDetailsImpl(user);
     }
 
@@ -63,8 +65,8 @@ public class UserService implements UserDetailsService {
      */
     public User findUserByEmail(String email) {
         return userRepository
-                .findByEmail(email)
-                .orElseThrow(() -> new UserNotFoundException("no user with email: " + email + " found"));
+          .findByEmail(email)
+          .orElseThrow(() -> new UserNotFoundException("no user with email: " + email + " found"));
     }
 
     /**
@@ -127,19 +129,32 @@ public class UserService implements UserDetailsService {
      * @param password the password to validate
      * @return the User object corresponding to the specified email address and password
      * @throws BadCredentialsException if the specified email address and password are invalid
+     * @throws AccountLockedException  if the user account is locked due to multiple failed login attempts
      */
     public User validateCredentials(String email, String password) {
+        User user = userRepository.findByEmail(email)
+          .orElseThrow(() -> new BadCredentialsException("Invalid credentials"));
 
-        User user = userRepository
-                .findByEmail(email) // get the user by email
-                .orElseThrow(
-                        // if the user doesn't exist, throw an exception
-                        () -> new BadCredentialsException("Invalid credentials")
-                );
+        if (!passwordEncoder.matches(password, user.getPassword())) { // If the password is incorrect
+            // Increment failed attempts
+            user.setFailedAttempts(user.getFailedAttempts() + 1);
 
-        // check if the password matches
-        if (!passwordEncoder.matches(password, user.getPassword()))
+            userRepository.save(user);
+
+            if (user.getFailedAttempts() >= MAX_FAILED_ATTEMPTS) { // If the user has failed to log in 5 times
+                // Lock the account
+                log.info("Locking account for user: {}", email);
+                user.setAccountNonLocked(false);
+                userRepository.save(user);
+                throw new AccountLockedException();
+            }
+
             throw new BadCredentialsException("Invalid credentials");
+        }
+
+        // Reset failed attempts on successful login
+        user.setFailedAttempts(0);
+        userRepository.save(user);
 
         return user;
     }

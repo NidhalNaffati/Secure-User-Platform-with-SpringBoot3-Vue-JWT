@@ -2,6 +2,7 @@ package com.nidhal.backend.service;
 
 
 import com.nidhal.backend.entity.User;
+import com.nidhal.backend.exception.AccountLockedException;
 import com.nidhal.backend.exception.EmailAlreadyExistsException;
 import com.nidhal.backend.exception.PasswordDontMatchException;
 import com.nidhal.backend.exception.UserNotFoundException;
@@ -18,6 +19,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Optional;
 
+import static com.nidhal.backend.service.UserService.MAX_FAILED_ATTEMPTS;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -60,7 +62,7 @@ class UserServiceTest {
 
         // when
         assertThrows(UsernameNotFoundException.class,
-                () -> underTestUserService.loadUserByUsername(email)
+          () -> underTestUserService.loadUserByUsername(email)
         );
 
         // then
@@ -162,7 +164,7 @@ class UserServiceTest {
 
         // when
         assertThrows(EmailAlreadyExistsException.class,
-                () -> underTestUserService.saveUser(user)
+          () -> underTestUserService.saveUser(user)
         );
 
         // then
@@ -232,7 +234,7 @@ class UserServiceTest {
 
         // when
         assertThrows(PasswordDontMatchException.class,
-                () -> underTestUserService.updatePassword(email, password, confirmPassword)
+          () -> underTestUserService.updatePassword(email, password, confirmPassword)
         );
 
         // then
@@ -254,7 +256,7 @@ class UserServiceTest {
 
         // when
         assertThrows(UserNotFoundException.class,
-                () -> underTestUserService.updatePassword(email, password, confirmPassword)
+          () -> underTestUserService.updatePassword(email, password, confirmPassword)
         );
 
         // then
@@ -297,7 +299,7 @@ class UserServiceTest {
 
         // when
         assertThrows(BadCredentialsException.class,
-                () -> underTestUserService.validateCredentials(email, password)
+          () -> underTestUserService.validateCredentials(email, password)
         );
 
         // then
@@ -327,6 +329,31 @@ class UserServiceTest {
     }
 
     @Test
+    void testValidateCredentials_LockUserAfterFailedAttempts() {
+        // given
+        var email = "fakeemail@example.com";
+        var password = "wrongPassword";
+
+        User user = new User();
+        user.setEmail(email);
+        user.setPassword(passwordEncoder.encode(password));
+        user.setFailedAttempts(MAX_FAILED_ATTEMPTS - 1);
+        user.setAccountNonLocked(true);
+
+        // when
+        when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
+
+        // then
+        User lockedUser = underTestUserService.findUserByEmail(email);
+
+        assertThrows(AccountLockedException.class, () -> underTestUserService.validateCredentials(email, password));
+        assertFalse(lockedUser.isAccountNonLocked()); // Ensure account is unlocked after successful login
+        assertEquals(5, lockedUser.getFailedAttempts()); // Ensure failed attempts are reset
+        verify(userRepository, times(2)).save(user);
+    }
+
+
+    @Test
     void testEnableUser() {
         // given
         String email = "test@example.com";
@@ -354,7 +381,7 @@ class UserServiceTest {
 
         // when
         assertThrows(UserNotFoundException.class,
-                () -> underTestUserService.enableUser(email)
+          () -> underTestUserService.enableUser(email)
         );
 
         // then

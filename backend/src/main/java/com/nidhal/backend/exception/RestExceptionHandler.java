@@ -40,11 +40,11 @@ public class RestExceptionHandler {
     public ResponseEntity<Object> handleMethodArgumentNotValidException(MethodArgumentNotValidException exception) {
 
         List<String> errorList = exception
-                .getBindingResult()
-                .getFieldErrors()
-                .stream()
-                .map(DefaultMessageSourceResolvable::getDefaultMessage)
-                .toList();
+          .getBindingResult()
+          .getFieldErrors()
+          .stream()
+          .map(DefaultMessageSourceResolvable::getDefaultMessage)
+          .toList();
 
         ErrorResponse response = new ErrorResponse();
         response.setStatus(UNPROCESSABLE_ENTITY);
@@ -165,6 +165,16 @@ public class RestExceptionHandler {
         ErrorResponse response = new ErrorResponse();
         response.setStatus(BAD_REQUEST);
         response.setMessage("Invalid credentials");
+        return buildResponseEntity(response);
+    }
+
+
+
+    @ExceptionHandler(AccountLockedException.class)
+    public ResponseEntity<Object> handleAccountLockedException(AccountLockedException exception) {
+        ErrorResponse response = new ErrorResponse();
+        response.setStatus(LOCKED);
+        response.setMessage(exception.getReason());
         return buildResponseEntity(response);
     }
 

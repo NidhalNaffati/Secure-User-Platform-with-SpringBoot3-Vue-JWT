@@ -53,11 +53,13 @@ public class User {
 
     private boolean accountNonLocked; // by default is true, until the user is blocked by the admin.
 
+    private int failedAttempts;
+
     @OneToMany(mappedBy = "user")
     private List<Token> tokens;
 
     public static User of(String firstName, String lastName, String email, String password, String confirmPassword, Role role) {
-        return new User(null, firstName, lastName, email, password, confirmPassword, role, false, true, null);
+        return new User(null, firstName, lastName, email, password, confirmPassword, role, false, true, 0, null);
     }
 
 }
