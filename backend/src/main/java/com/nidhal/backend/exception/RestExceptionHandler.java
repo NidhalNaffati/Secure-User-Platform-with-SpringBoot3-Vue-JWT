@@ -30,12 +30,6 @@ import static org.springframework.http.HttpStatus.*;
 @ControllerAdvice
 public class RestExceptionHandler {
 
-    /**
-     * Handles MethodArgumentNotValidException and returns a ResponseEntity with an ErrorResponse containing the error message.
-     *
-     * @param exception the MethodArgumentNotValidException to be handled
-     * @return a ResponseEntity with an ErrorResponse containing the error message
-     */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Object> handleMethodArgumentNotValidException(MethodArgumentNotValidException exception) {
 
@@ -52,28 +46,14 @@ public class RestExceptionHandler {
         return buildResponseEntity(response);
     }
 
-
-    /**
-     * Handles TypeMismatchException and returns a ResponseEntity with an ErrorResponse containing the error message.
-     *
-     * @param exception the TypeMismatchException to be handled
-     * @return a ResponseEntity with an ErrorResponse containing the error message
-     */
     @ExceptionHandler(TypeMismatchException.class)
-    protected ResponseEntity<Object> handleTypeMismatch(TypeMismatchException exception) {
+    public ResponseEntity<Object> handleTypeMismatch(TypeMismatchException exception) {
         ErrorResponse response = new ErrorResponse();
         response.setStatus(NOT_IMPLEMENTED);
         response.setMessage(exception.getMessage());
         return buildResponseEntity(response);
     }
 
-
-    /**
-     * Handles PasswordDontMatchException and returns a ResponseEntity with an ErrorResponse containing the error message.
-     *
-     * @param exception the PasswordDontMatchException to be handled
-     * @return a ResponseEntity with an ErrorResponse containing the error message
-     */
     @ExceptionHandler(PasswordDontMatchException.class)
     public ResponseEntity<Object> handlePasswordDontMatchException(PasswordDontMatchException exception) {
         ErrorResponse response = new ErrorResponse();
@@ -82,13 +62,6 @@ public class RestExceptionHandler {
         return buildResponseEntity(response);
     }
 
-
-    /**
-     * Handles UserNotFoundException and returns a ResponseEntity with an ErrorResponse containing the error message.
-     *
-     * @param exception the UserNotFoundException to be handled
-     * @return a ResponseEntity with an ErrorResponse containing the error message
-     */
     @ExceptionHandler(UserNotFoundException.class)
     public ResponseEntity<Object> handleUserNotFoundException(UserNotFoundException exception) {
         ErrorResponse response = new ErrorResponse();
@@ -97,13 +70,6 @@ public class RestExceptionHandler {
         return buildResponseEntity(response);
     }
 
-
-    /**
-     * Handles EmailAlreadyExistsException and returns a ResponseEntity with an ErrorResponse containing the error message.
-     *
-     * @param exception the EmailAlreadyExistsException to be handled
-     * @return a ResponseEntity with an ErrorResponse containing the error message
-     */
     @ExceptionHandler(EmailAlreadyExistsException.class)
     public ResponseEntity<Object> handleEmailAlreadyExistsException(EmailAlreadyExistsException exception) {
         ErrorResponse response = new ErrorResponse();
@@ -112,26 +78,14 @@ public class RestExceptionHandler {
         return buildResponseEntity(response);
     }
 
-
-    /**
-     * Handles AccessDeniedException and returns a ResponseEntity with an ErrorResponse containing the error message.
-     *
-     * @return a ResponseEntity with an ErrorResponse containing the error message
-     */
     @ExceptionHandler(AccessDeniedException.class)
-    protected ResponseEntity<Object> handleAccessDeniedException() {
+    public ResponseEntity<Object> handleAccessDeniedException() {
         ErrorResponse response = new ErrorResponse();
         response.setStatus(FORBIDDEN);
         response.setMessage("You are not authorized to access this resource");
         return buildResponseEntity(response);
     }
 
-
-    /**
-     * Handles ExpiredJwtException and returns a ResponseEntity with an ErrorResponse containing the error message.
-     *
-     * @return a ResponseEntity with an ErrorResponse containing the error message
-     */
     @ExceptionHandler(ExpiredJwtException.class)
     public ResponseEntity<Object> handleExpiredJwtException() {
         ErrorResponse response = new ErrorResponse();
@@ -140,12 +94,6 @@ public class RestExceptionHandler {
         return buildResponseEntity(response);
     }
 
-
-    /**
-     * Handles DisabledException and returns a ResponseEntity with an ErrorResponse containing the error message.
-     *
-     * @return a ResponseEntity with an ErrorResponse containing the error message
-     */
     @ExceptionHandler(DisabledException.class)
     public ResponseEntity<Object> handleDisabledException() {
         ErrorResponse response = new ErrorResponse();
@@ -154,12 +102,6 @@ public class RestExceptionHandler {
         return buildResponseEntity(response);
     }
 
-
-    /**
-     * Handles BadCredentialsException and returns a ResponseEntity with an ErrorResponse containing the error message.
-     *
-     * @return a ResponseEntity with an ErrorResponse containing the error message
-     */
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<Object> handleBadCredentialsException() {
         ErrorResponse response = new ErrorResponse();
@@ -167,8 +109,6 @@ public class RestExceptionHandler {
         response.setMessage("Invalid credentials");
         return buildResponseEntity(response);
     }
-
-
 
     @ExceptionHandler(AccountLockedException.class)
     public ResponseEntity<Object> handleAccountLockedException(AccountLockedException exception) {
@@ -178,12 +118,6 @@ public class RestExceptionHandler {
         return buildResponseEntity(response);
     }
 
-
-    /**
-     * Handles HttpMessageNotReadableException and returns a ResponseEntity with an ErrorResponse containing the error message.
-     *
-     * @return a ResponseEntity with an ErrorResponse containing the error message
-     */
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<Object> handleHttpMessageNotReadable() {
         ErrorResponse response = new ErrorResponse();
@@ -192,13 +126,6 @@ public class RestExceptionHandler {
         return buildResponseEntity(response);
     }
 
-
-    /**
-     * Handles MailSendException and returns a ResponseEntity with an ErrorResponse containing the error message.
-     *
-     * @param exception the MailSendException to be handled
-     * @return a ResponseEntity with an ErrorResponse containing the error message
-     */
     @ExceptionHandler(MailSendException.class)
     public ResponseEntity<Object> handleUnknownHostException(MailSendException exception) {
         ErrorResponse response = new ErrorResponse();
@@ -207,13 +134,6 @@ public class RestExceptionHandler {
         return buildResponseEntity(response);
     }
 
-
-    /**
-     * Handles any other type of Exception and returns a ResponseEntity with an ErrorResponse containing the error message.
-     *
-     * @param exception the Exception to be handled
-     * @return a ResponseEntity with an ErrorResponse containing the error message
-     */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Object> handleAnyException(Exception exception) {
         ErrorResponse error = new ErrorResponse();
@@ -221,7 +141,6 @@ public class RestExceptionHandler {
         error.setMessage("An internal server error has occurred." + exception.getMessage());
         return buildResponseEntity(error);
     }
-
 
     private ResponseEntity<Object> buildResponseEntity(ErrorResponse response) {
         return new ResponseEntity<>(response, response.getStatus());
