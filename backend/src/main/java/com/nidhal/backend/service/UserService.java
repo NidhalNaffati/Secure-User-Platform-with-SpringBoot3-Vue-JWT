@@ -7,7 +7,9 @@ import com.nidhal.backend.exception.EmailAlreadyExistsException;
 import com.nidhal.backend.exception.PasswordDontMatchException;
 import com.nidhal.backend.exception.UserNotFoundException;
 import com.nidhal.backend.model.UserDetailsImpl;
+import com.nidhal.backend.repository.TokenRepository;
 import com.nidhal.backend.repository.UserRepository;
+import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -15,6 +17,8 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 /**
  * The UserService class handles business logic related to user accounts, such as saving and retrieving users,
@@ -28,6 +32,7 @@ public class UserService implements UserDetailsService {
     public static final int MAX_FAILED_ATTEMPTS = 5;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final TokenRepository tokenRepository;
 
     /**
      * Loads a user from the database by their email address.
@@ -40,8 +45,8 @@ public class UserService implements UserDetailsService {
     public UserDetailsImpl loadUserByUsername(String username) throws UsernameNotFoundException {
         log.info("loading user by username: {}", username);
         User user = userRepository
-          .findByEmail(username) // find the user by email
-          .orElseThrow(() -> new UsernameNotFoundException("user not found")); // if the user is not found, throw an exception
+            .findByEmail(username) // find the user by email
+            .orElseThrow(() -> new UsernameNotFoundException("user not found")); // if the user is not found, throw an exception
         return new UserDetailsImpl(user);
     }
 
@@ -65,8 +70,8 @@ public class UserService implements UserDetailsService {
      */
     public User findUserByEmail(String email) {
         return userRepository
-          .findByEmail(email)
-          .orElseThrow(() -> new UserNotFoundException("no user with email: " + email + " found"));
+            .findByEmail(email)
+            .orElseThrow(() -> new UserNotFoundException("no user with email: " + email + " found"));
     }
 
     /**
@@ -133,7 +138,7 @@ public class UserService implements UserDetailsService {
      */
     public User validateCredentials(String email, String password) {
         User user = userRepository.findByEmail(email)
-          .orElseThrow(() -> new BadCredentialsException("Invalid credentials"));
+            .orElseThrow(() -> new BadCredentialsException("Invalid credentials"));
 
         if (!passwordEncoder.matches(password, user.getPassword())) { // If the password is incorrect
             // Increment failed attempts
@@ -174,4 +179,47 @@ public class UserService implements UserDetailsService {
         userRepository.save(user);
     }
 
+    public void lockUser(String email) {
+        // get the user by email
+        User user = findUserByEmail(email);
+        // lock the user
+        user.setAccountNonLocked(false);
+        // save the user
+        userRepository.save(user);
+    }
+
+    public void unlockUser(String email) {
+        // get the user by email
+        User user = findUserByEmail(email);
+        // unlock the user
+        user.setAccountNonLocked(true);
+        user.setFailedAttempts(0);
+        // save the user
+        userRepository.save(user);
+    }
+
+    public List<User> getAllUsers() {
+        return userRepository.findAllUsers();
+    }
+
+    public List<User> getLockedUsers() {
+        return userRepository.findLockedUsers();
+    }
+
+    public List<User> getUnlockedUsers() {
+        return userRepository.findUnlockedUsers();
+    }
+
+    @Transactional
+    public void deleteUser(String email) {
+        // get the user by email
+        User user = findUserByEmail(email);
+        long userId = user.getId();
+
+        // First, delete the tokens associated with the user
+        tokenRepository.deleteAllByUser(userId);
+
+        // Then, delete the user
+        userRepository.delete(user);
+    }
 }

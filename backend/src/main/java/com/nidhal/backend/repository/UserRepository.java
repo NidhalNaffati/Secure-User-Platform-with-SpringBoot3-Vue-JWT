@@ -19,4 +19,14 @@ public interface UserRepository extends JpaRepository<User, Long> {
     boolean existsByEmail(String email);
 
     Optional<User> findByEmail(String email);
+
+    @Query("SELECT u FROM User u WHERE u.role= 'ROLE_USER'")
+    List<User> findAllUsers();
+
+    @Query("SELECT u FROM User u WHERE u.role = 'ROLE_USER' AND u.accountNonLocked = FALSE")
+    List<User> findLockedUsers();
+
+    @Query("SELECT u FROM User u WHERE u.role = 'ROLE_USER' AND u.accountNonLocked = TRUE")
+    List<User> findUnlockedUsers();
+
 }

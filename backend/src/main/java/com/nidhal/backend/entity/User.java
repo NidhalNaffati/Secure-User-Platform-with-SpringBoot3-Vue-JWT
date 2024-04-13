@@ -1,5 +1,6 @@
 package com.nidhal.backend.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.nidhal.backend.model.Role;
 import jakarta.persistence.*;
 import lombok.*;
@@ -13,16 +14,16 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @Table(
-        name = "user_app",
-        uniqueConstraints = {
-                @UniqueConstraint(columnNames = "email")
-        })
+    name = "user_app",
+    uniqueConstraints = {
+        @UniqueConstraint(columnNames = "email")
+    })
 public class User {
     @Id
     @SequenceGenerator(
-            name = "user_generator",
-            sequenceName = "user_app_seq",
-            allocationSize = 1
+        name = "user_generator",
+        sequenceName = "user_app_seq",
+        allocationSize = 1
     )
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "user_generator")
     @Column(name = "id")
@@ -37,8 +38,10 @@ public class User {
     @Column(length = 100)
     private String email;
 
+    @JsonIgnore // to prevent the password from being returned in the response body.
     private String password;
 
+    @JsonIgnore
     @Transient
     private String confirmPassword;
 
@@ -55,6 +58,7 @@ public class User {
 
     private int failedAttempts;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "user")
     private List<Token> tokens;
 
