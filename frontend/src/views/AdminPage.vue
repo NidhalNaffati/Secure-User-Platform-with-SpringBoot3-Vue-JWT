@@ -1,6 +1,7 @@
 <script setup>
-import { ref, onMounted } from "vue";
+import {ref, onMounted} from "vue";
 import axiosInstance from "@/api/axiosInstance";
+import UsersTable from "@/components/UsersTable.vue";
 
 const message = ref("");
 
@@ -41,6 +42,7 @@ onMounted(getMessage);
       <div>
         <h2>{{ message }}</h2>
       </div>
+      <UsersTable/>
     </div>
   </section>
 </template>
