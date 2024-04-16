@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -49,75 +50,75 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                // disable CSRF protection
-                .csrf(
-                        AbstractHttpConfigurer::disable
-                )
+            // disable CSRF protection
+            .csrf(
+                AbstractHttpConfigurer::disable
+            )
 
-                // set up the headers to use the same origin
-                .headers(
-                        headers -> headers
-                                .frameOptions().sameOrigin()
-                )
+            // set up the headers to use the same origin
+            .headers(
+                headers -> headers
+                    .frameOptions(Customizer.withDefaults())
+            )
 
-                // set up the Exception Handler
-                .exceptionHandling(
-                        exceptionHandling -> exceptionHandling
-                                .accessDeniedHandler((request, response, accessDeniedException) -> {
-                                    response.setStatus(SC_FORBIDDEN);
-                                    response.getWriter().write("access denied");
-                                    log.error("Access denied error handler triggered");
-                                })
-                )
+            // set up the Exception Handler
+            .exceptionHandling(
+                exceptionHandling -> exceptionHandling
+                    .accessDeniedHandler((request, response, accessDeniedException) -> {
+                        response.setStatus(SC_FORBIDDEN);
+                        response.getWriter().write("access denied");
+                        log.error("Access denied error handler triggered");
+                    })
+            )
 
-                // set up the authorization rules
-                .authorizeHttpRequests(
-                        authorizeHttpRequests -> authorizeHttpRequests
+            // set up the authorization rules
+            .authorizeHttpRequests(
+                authorizeHttpRequests -> authorizeHttpRequests
 
-                                // allow access to the static resources to everyone
-                                .requestMatchers(HttpMethod.POST,
-                                        "/api/v1/auth/register/**",
-                                        "/api/v1/auth/refresh-token",
-                                        "/api/v1/auth/enable-user/**",
-                                        "/api/v1/auth/authenticate",
-                                        "/api/v1/auth/forgot-password",
-                                        "/api/v1/auth/reset-password")
-                                .permitAll()
+                    // allow access to the static resources to everyone
+                    .requestMatchers(HttpMethod.POST,
+                        "/api/v1/auth/register/**",
+                        "/api/v1/auth/refresh-token",
+                        "/api/v1/auth/enable-user/**",
+                        "/api/v1/auth/authenticate",
+                        "/api/v1/auth/forgot-password",
+                        "/api/v1/auth/reset-password")
+                    .permitAll()
 
-                                // allow only authenticated user to this endpoint
-                                .requestMatchers(HttpMethod.GET,
-                                        "/api/v1/user/**")
-                                .hasAuthority("ROLE_USER")
+                    // allow only authenticated user to this endpoint
+                    .requestMatchers(HttpMethod.GET,
+                        "/api/v1/user/**")
+                    .hasAuthority("ROLE_USER")
 
-                                // allow only authenticated admin to this endpoint
-                                .requestMatchers(HttpMethod.GET,
-                                        "/api/v1/admin/**")
-                                .hasAuthority("ROLE_ADMIN")
+                    // allow only authenticated admin to this endpoint
+                    .requestMatchers(HttpMethod.GET,
+                        "/api/v1/admin/**")
+                    .hasAuthority("ROLE_ADMIN")
 
-                                // any other request must be authenticated
-                                .anyRequest().authenticated()
-                )
+                    // any other request must be authenticated
+                    .anyRequest().authenticated()
+            )
 
-                // set up the CORS configuration
-                .cors(withDefaults()) // by default uses a Bean by the name of corsConfigurationSource
+            // set up the CORS configuration
+            .cors(withDefaults()) // by default uses a Bean by the name of corsConfigurationSource
 
-                // set up the session management
-                .sessionManagement(
-                        sessionManagement -> sessionManagement
-                                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                )
+            // set up the session management
+            .sessionManagement(
+                sessionManagement -> sessionManagement
+                    .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            )
 
-                // set up the authentication provider
-                .authenticationProvider(authenticationProvider)
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+            // set up the authentication provider
+            .authenticationProvider(authenticationProvider)
+            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
 
-                // set up the logout handler
-                .logout(
-                        logout -> logout
-                                .logoutUrl("/api/v1/auth/logout")
-                                .addLogoutHandler(logoutHandler)
-                                .logoutSuccessHandler((request, response, authentication) -> SecurityContextHolder.clearContext())
-                );
+            // set up the logout handler
+            .logout(
+                logout -> logout
+                    .logoutUrl("/api/v1/auth/logout")
+                    .addLogoutHandler(logoutHandler)
+                    .logoutSuccessHandler((request, response, authentication) -> SecurityContextHolder.clearContext())
+            );
 
         return http.build();
     }
@@ -132,27 +133,26 @@ public class SecurityConfig {
 
         final CorsConfiguration corsConfiguration = new CorsConfiguration();
 
-
         corsConfiguration.setAllowedOriginPatterns(List.of("*"));
 
         corsConfiguration.setAllowedMethods(
-                List.of(
-                        "GET",
-                        "POST",
-                        "PUT",
-                        "DELETE"
-                )
+            List.of(
+                "GET",
+                "POST",
+                "PUT",
+                "DELETE"
+            )
         );
 
 
         corsConfiguration.setAllowedHeaders(
-                List.of(
-                        "Authorization",
-                        "Content-Type",
-                        "Access-Control-Allow-Origin",
-                        "Access-Control-Allow-Headers",
-                        "Access-Control-Expose-Headers"
-                ));
+            List.of(
+                "Authorization",
+                "Content-Type",
+                "Access-Control-Allow-Origin",
+                "Access-Control-Allow-Headers",
+                "Access-Control-Expose-Headers"
+            ));
 
         corsConfiguration.setAllowCredentials(true);
 
